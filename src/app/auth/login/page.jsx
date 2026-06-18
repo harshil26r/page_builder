@@ -2,13 +2,17 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
@@ -22,11 +26,19 @@ const Login = () => {
       ...data,
       [name]: value,
     });
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
+    if (!data.email.trim() || !data.password.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await fetch(`/api/auth/login`, {
         method: "POST",
@@ -42,86 +54,134 @@ const Login = () => {
       const response = await res.json();
       if (response.success) {
         localStorage.setItem("token", response.token);
+        toast.success("Login successful! Redirecting...", {
+          position: "bottom-center",
+          autoClose: 1000,
+        });
         setTimeout(() => {
           router.push("/");
         }, 1000);
+      } else {
+        setError(response.error || "Invalid credentials");
       }
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <>
-      <div className="flex min-h-screen justify-center items-center flex-col w-full px-3  mb-5 lg:px-8">
-        <div className="sm:mx-auto sm:max-w-sm flex">
-          <h2 className="mt-2 text-center text-3xl font-semibold leading-9 tracking-tight text-gray-800">
-            Rapid Page Builder
-          </h2>
-        </div>
+      <ToastContainer
+        position="bottom-center"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
 
-        <div className="mt-16 border-2  py-10 px-10 rounded sm:mx-auto  md:w-1/2 sm:w-full ">
-          <div className="font-normal text-3xl mb-6">Login</div>
-          <form className="space-y-6" onSubmit={handleSubmit} method="POST">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Email address <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-2">
-                <input
-                  id="email"
-                  value={data.email}
-                  onChange={onChange}
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                />
-              </div>
+      <div className="relative flex min-h-screen items-center justify-center bg-gray-950 overflow-hidden px-4 py-12">
+        {/* Decorative Background Blobs */}
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-600/30 rounded-full filter blur-[80px]" />
+        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-purple-600/25 rounded-full filter blur-[100px]" />
+
+        <div className="relative z-10 w-full max-w-md">
+          <div className="backdrop-blur-xl bg-gray-900/60 border border-gray-800 p-8 md:p-10 rounded-2xl shadow-2xl">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Welcome Back
+              </h2>
+              <p className="text-gray-400 mt-2 text-sm">
+                Login to access the Rapid Page Builder
+              </p>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between">
+            <form className="space-y-6" onSubmit={handleSubmit} method="POST">
+              <div>
                 <label
-                  htmlFor="password"
-                  className="block text-sm font-medium leading-6 text-gray-900"
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-300"
                 >
-                  Password <span className="text-red-500">*</span>
+                  Email address <span className="text-red-400">*</span>
                 </label>
+                <div className="mt-1.5">
+                  <input
+                    id="email"
+                    value={data.email}
+                    onChange={onChange}
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                  />
+                </div>
               </div>
-              <div className="mt-2">
-                <input
-                  id="password"
-                  value={data.password}
-                  onChange={onChange}
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                />
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-300"
+                  >
+                    Password <span className="text-red-400">*</span>
+                  </label>
+                </div>
+                <div className="mt-1.5">
+                  <input
+                    id="password"
+                    value={data.password}
+                    onChange={onChange}
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    required
+                    className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                  />
+                </div>
               </div>
+
+              {error && (
+                <div className="text-red-400 text-sm font-medium text-center bg-red-950/30 border border-red-900/50 py-2 px-3 rounded-lg">
+                  {error}
+                </div>
+              )}
 
               <button
                 type="submit"
-                className="mt-4 flex  items-center rounded-md bg-blue-700 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                disabled={loading}
+                className="w-full flex justify-center items-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transform hover:-translate-y-0.5 active:translate-y-0 transition duration-150"
               >
-                Login
+                {loading ? (
+                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  "Login"
+                )}
               </button>
-              <div className="mt-4 text-center text-gray-500">
-                Not a register User?{" "}
+
+              <div className="mt-6 text-center text-sm text-gray-500">
+                Not a registered User?{" "}
                 <Link
                   href="/auth/signup"
-                  className=" underline text-blue-600 hover:text-blue-500"
+                  className="text-indigo-400 hover:text-indigo-300 font-semibold underline transition duration-150"
                 >
                   Sign Up
                 </Link>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </>
