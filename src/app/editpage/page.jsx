@@ -10,7 +10,6 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import "react-toastify/dist/ReactToastify.css";
 import { storage } from "@/components/firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
-import RichTextEditor from "@/components/RichTextEditor";
 
 function EditPageContent() {
   const router = useRouter();
@@ -24,6 +23,7 @@ function EditPageContent() {
   const [errors, setErrors] = useState({});
   const [imageUpload, setImageUpload] = useState(null);
   const [imageList, setImageList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const imageListRef = ref(storage, "images/");
 
@@ -94,13 +94,19 @@ function EditPageContent() {
 
   const uploadImage = () => {
     if (imageUpload === null) return;
+    setUploading(true);
 
     const imageRef = ref(storage, `images/${imageUpload.name}`);
-    uploadBytes(imageRef, imageUpload).then(() => {
-      console.log("imageUpload done");
-      // Add visual confirmation
-      toast.success("Image uploaded successfully!");
-    });
+    uploadBytes(imageRef, imageUpload)
+      .then(() => {
+        toast.success("Image uploaded successfully!");
+        setUploading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Upload failed.");
+        setUploading(false);
+      });
   };
 
   const onChange = (e) => {
@@ -119,22 +125,19 @@ function EditPageContent() {
     let isValid = true;
     const newErrors = {};
 
-    // title validation
     if (!data.title.trim()) {
       newErrors.title = "Title is required";
       isValid = false;
     } else if (data.title.trim().length < 5) {
-      newErrors.title = "Title is minimum 4 character";
+      newErrors.title = "Title is minimum 5 characters";
       isValid = false;
     }
 
-    // subText validation
     if (!data.subText.trim()) {
       newErrors.subText = "Sub Text is required";
       isValid = false;
     }
 
-    // url validation
     if (!data.url.trim()) {
       newErrors.url = "URL is required";
       isValid = false;
@@ -171,12 +174,12 @@ function EditPageContent() {
       const response = await res.json();
       if (response.success) {
         setCurrentBlogId(response.id);
-        toast.success("Your Blog saved as Draft!", {
+        toast.success("Your Page saved as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
         });
       } else {
-        toast.error("Blog already exists!", {
+        toast.error("Page already exists!", {
           position: "bottom-center",
           autoClose: 1000,
         });
@@ -201,12 +204,12 @@ function EditPageContent() {
       const response = await res.json();
       if (response.success) {
         setCurrentBlogId(id);
-        toast.success("Your Blog updated as Draft!", {
+        toast.success("Your Page updated as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
         });
       } else {
-        toast.error("Blog already exists!", {
+        toast.error("Page already exists!", {
           position: "bottom-center",
           autoClose: 1000,
         });
@@ -258,88 +261,93 @@ function EditPageContent() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="light"
+        theme="dark"
       />
-      <div className="flex">
+      <div className="flex bg-gray-950 text-gray-100 min-h-screen">
         <Sidebar />
-        <div className="flex flex-col w-full h-fit scroll-m-0 ">
-          <div className="flex flex-col md:flex-row p-6 w-full justify-center h-fit  border-b-2 ">
-            <div className="flex flex-row justify-center items-center">
-              <button className="text-xl me-5" onClick={() => router.push("/")}>
-                <IoIosArrowBack />
+        <div className="flex flex-col w-full h-fit scroll-m-0">
+          
+          {/* Header Action Bar */}
+          <div className="flex flex-col md:flex-row p-6 w-full justify-between items-center border-b border-gray-800 bg-gray-900/10 backdrop-blur-sm gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                className="flex items-center justify-center h-10 w-10 rounded-xl border border-gray-800 bg-gray-900/40 text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
+                onClick={() => router.push("/")}
+              >
+                <IoIosArrowBack className="text-xl" />
               </button>
-              <p className="font-medium text-xl mt-1 me-5">Home Page</p>
-              {(id || currentBlogId) && (
-                <span
-                  className={`${
-                    currentBlog.status === "draft"
-                      ? "bg-yellow-100  text-yellow-600"
-                      : currentBlog.status === "scheduled"
-                      ? "bg-blue-100  text-blue-600"
-                      : currentBlog.status === "published"
-                      ? "bg-green-100  text-green-600"
-                      : ""
-                  } font-medium text-base p-2  rounded-md`}
-                >
-                  {currentBlog.status || "draft"}
-                </span>
-              )}
+              <div>
+                <p className="font-bold text-xl text-white">
+                  {id ? "Edit Page" : "Create Page"}
+                </p>
+                {(id || currentBlogId) && (
+                  <span
+                    className={`inline-block text-xs font-bold px-2 py-0.5 mt-1 rounded-full uppercase tracking-wider ${
+                      currentBlog.status === "draft"
+                        ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                        : currentBlog.status === "scheduled"
+                        ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                        : currentBlog.status === "published"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                        : ""
+                    }`}
+                  >
+                    {currentBlog.status || "draft"}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <ul className="flex mt-5 justify-center items-center md:mt-0 md:ms-auto">
+            <ul className="flex items-center gap-3">
               <li>
-                <div>
-                  <Menu as="div" className="relative ml-3">
-                    <div>
-                      <Menu.Button className="relative flex rounded-sm  p-1 px-2 border-2 me-3 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-600">
-                        ...
-                      </Menu.Button>
-                    </div>
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-100"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
-                      leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
-                    >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-35 origin-top-right rounded-md bg-white py-1 shadow-lg focus:outline-none">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              href="#"
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-gray-700"
-                              )}
-                            >
-                              Preview
-                            </a>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              href="#"
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-red-700"
-                              )}
-                            >
-                              Delete
-                            </a>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Transition>
-                  </Menu>
-                </div>
+                <Menu as="div" className="relative">
+                  <Menu.Button className="flex items-center justify-center h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/40 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150">
+                    Actions •••
+                  </Menu.Button>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
+                  >
+                    <Menu.Items className="absolute right-0 mt-2 w-36 origin-top-right rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl z-20">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <a
+                            href="#"
+                            className={classNames(
+                              active ? "bg-gray-800 text-white" : "text-gray-400",
+                              "block px-4 py-2 text-xs font-medium transition duration-150"
+                            )}
+                          >
+                            Preview
+                          </a>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <a
+                            href="#"
+                            className={classNames(
+                              active ? "bg-red-500/10 text-red-400" : "text-red-400/80",
+                              "block px-4 py-2 text-xs font-medium transition duration-150"
+                            )}
+                          >
+                            Delete
+                          </a>
+                        )}
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
               </li>
               <li>
                 <button
                   onClick={() => router.push("/")}
-                  className="bg-white border rounded p-1 me-3"
+                  className="h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/20 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800/40 transition duration-150"
                 >
                   Cancel
                 </button>
@@ -347,23 +355,24 @@ function EditPageContent() {
               <li>
                 <button
                   onClick={validateForm}
-                  className="bg-blue-500 text-white px-3 rounded p-1 me-3"
+                  className="h-10 px-5 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-md hover:bg-indigo-500 transition duration-150"
                 >
-                  Save
+                  Save Draft
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => setOpen(true)}
-                  className="bg-green-700 text-white px-3  rounded p-1 me-3"
+                  className="h-10 px-5 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-md hover:bg-emerald-500 transition duration-150"
                 >
                   Publish
                 </button>
               </li>
             </ul>
 
+            {/* Publish Scheduler Modal */}
             <Transition.Root show={open} as={Fragment}>
-              <Dialog as="div" className="relative z-30 m-0 " onClose={setOpen}>
+              <Dialog as="div" className="relative z-30" onClose={setOpen}>
                 <Transition.Child
                   as={Fragment}
                   enter="ease-out duration-300"
@@ -373,43 +382,41 @@ function EditPageContent() {
                   leaveFrom="opacity-100"
                   leaveTo="opacity-0"
                 >
-                  <div className="fixed inset-0 hidden bg-gray-500 bg-opacity-75 transition-opacity md:block" />
+                  <div className="fixed inset-0 bg-gray-950/80 transition-opacity" />
                 </Transition.Child>
 
-                <div className="fixed  inset-0 z-10 bg-gray-500 bg-opacity-15 overflow-y-auto">
-                  <div className="flex  h-fit min-h-screen justify-center text-center items-center md:px-2 lg:px-4">
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                  <div className="flex min-h-full items-center justify-center p-4 text-center">
                     <Transition.Child
                       as={Fragment}
                       enter="ease-out duration-300"
-                      enterFrom="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
-                      enterTo="opacity-100 translate-y-0 md:scale-100"
+                      enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                      enterTo="opacity-100 translate-y-0 sm:scale-100"
                       leave="ease-in duration-200"
-                      leaveFrom="opacity-100 translate-y-0 md:scale-100"
-                      leaveTo="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
+                      leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                      leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     >
-                      <Dialog.Panel className="w-auto md:w-1/3 rounded-md transform text-left bg-white text-base">
-                        <div className="flex bg-black h-20 rounded-t-md p-4 text-xl">
-                          <div className="text-white mt-3 ">Publish</div>
+                      <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-800 text-left shadow-2xl transition-all w-full max-w-md">
+                        <div className="bg-gray-950 px-6 py-4 flex items-center justify-between border-b border-gray-800">
+                          <Dialog.Title as="h3" className="text-lg font-bold text-white">
+                            Publish Settings
+                          </Dialog.Title>
                           <button
                             type="button"
-                            className="ms-auto"
                             onClick={() => setOpen(false)}
+                            className="text-gray-400 hover:text-white"
                           >
-                            <XMarkIcon
-                              className=" w-6 text-white"
-                              aria-hidden="true"
-                            />
+                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                           </button>
                         </div>
 
-                        <div className="mt-6 p-4">
+                        <div className="p-6 space-y-5">
                           <div>
                             <label
                               htmlFor="publishTime"
-                              className="block text-base font-normal leading-6 text-gray-500"
+                              className="block text-sm font-semibold text-gray-400"
                             >
-                              <span className="text-red-500">*</span> Publish
-                              Date
+                              Publish Date <span className="text-red-400">*</span>
                             </label>
                             <div className="mt-2">
                               <input
@@ -419,17 +426,17 @@ function EditPageContent() {
                                 value={data.publishTime}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm sm:leading-6"
+                                className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                               />
                             </div>
                           </div>
-                          <div className="mt-6 ">
+
+                          <div>
                             <label
                               htmlFor="publishDate"
-                              className="block text-base font-normal  leading-6 text-gray-500"
+                              className="block text-sm font-semibold text-gray-400"
                             >
-                              <span className="text-red-500">*</span> Publish
-                              Time
+                              Publish Time <span className="text-red-400">*</span>
                             </label>
                             <div className="mt-2">
                               <input
@@ -439,24 +446,24 @@ function EditPageContent() {
                                 value={data.publishDate}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm sm:leading-6 resize-none"
+                                className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                               />
                             </div>
                           </div>
                         </div>
-                        <hr className="mt-3 " />
-                        <div className="flex p-4">
+
+                        <div className="bg-gray-950/40 px-6 py-4 flex justify-end gap-3 border-t border-gray-800">
                           <button
                             onClick={() => setOpen(false)}
-                            className="mt-4 ms-auto  mr-5 border py-2 px-6 focus:outline-none hover:bg-gray-400 rounded text-lg"
+                            className="h-10 px-4 rounded-xl border border-gray-800 text-sm font-semibold text-gray-400 hover:text-white transition"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={addPublishTime}
-                            className="mt-4 bg-green-500 text-white border-0 py-2 px-6 focus:outline-none hover:bg-green-600 rounded text-lg"
+                            className="h-10 px-5 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-md hover:bg-emerald-500 transition"
                           >
-                            Publish
+                            Schedule Publish
                           </button>
                         </div>
                       </Dialog.Panel>
@@ -466,15 +473,18 @@ function EditPageContent() {
               </Dialog>
             </Transition.Root>
           </div>
-          <div className="flex flex-col md:flex-row h-fit">
-            <div className="w-full mb-5  md:m-8  p-3 md:p-0 ">
+
+          {/* Builder / Configuration Sections */}
+          <div className="flex flex-col lg:flex-row gap-6 p-8">
+            {/* Editor Workspace */}
+            <div className="flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 md:p-8 space-y-6">
               <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-lg font-medium leading-6 text-gray-500"
+                    className="block text-sm font-semibold text-gray-400"
                   >
-                    Title <span className="text-red-500">*</span>
+                    Page Title <span className="text-red-400">*</span>
                   </label>
                   <div className="mt-2">
                     <input
@@ -483,24 +493,22 @@ function EditPageContent() {
                       type="text"
                       value={data.title}
                       onChange={onChange}
-                      placeholder="Enter your title"
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      placeholder="My Awesome Landing Page"
+                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
                     />
                   </div>
                   {errors.title && (
-                    <span className="text-red-600">{errors.title}</span>
+                    <span className="text-red-400 text-xs mt-1 block">{errors.title}</span>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="subText"
-                      className="block text-lg font-medium leading-6 text-gray-500"
-                    >
-                      Sub Text
-                    </label>
-                  </div>
+                  <label
+                    htmlFor="subText"
+                    className="block text-sm font-semibold text-gray-400"
+                  >
+                    Sub Text
+                  </label>
                   <div className="mt-2">
                     <input
                       id="subText"
@@ -508,47 +516,43 @@ function EditPageContent() {
                       type="text"
                       value={data.subText}
                       onChange={onChange}
-                      placeholder="Enter your sub text"
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      placeholder="A short subtitle for SEO description"
+                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
                     />
                   </div>
                   {errors.subText && (
-                    <span className="text-red-600">{errors.subText}</span>
+                    <span className="text-red-400 text-xs mt-1 block">{errors.subText}</span>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="body"
-                      className="block text-lg font-medium leading-6 text-gray-500"
-                    >
-                      Body
-                    </label>
-                  </div>
+                  <label
+                    htmlFor="body"
+                    className="block text-sm font-semibold text-gray-400"
+                  >
+                    Body Content
+                  </label>
                   <div className="mt-2">
-                    <input
+                    <textarea
                       id="body"
                       name="body"
-                      type="text"
                       value={data.body}
                       onChange={onChange}
-                      placeholder="Enter your content here"
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      placeholder="Write your HTML or Markdown content here..."
+                      rows="8"
+                      className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200 resize-y font-mono text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="attachments"
-                      className="block text-lg font-medium leading-6 text-gray-500"
-                    >
-                      Attachments
-                    </label>
-                  </div>
-                  <div className="mt-2">
+                  <label
+                    htmlFor="attachments"
+                    className="block text-sm font-semibold text-gray-400"
+                  >
+                    Featured Media Attachment
+                  </label>
+                  <div className="mt-2 flex flex-col md:flex-row items-stretch md:items-center gap-3">
                     <input
                       id="attachments"
                       name="attachments"
@@ -558,67 +562,76 @@ function EditPageContent() {
                           setImageUpload(e.target.files[0]);
                         }
                       }}
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      className="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-gray-300 file:hover:bg-gray-700 transition cursor-pointer"
                     />
+                    <button
+                      type="button"
+                      disabled={uploading || !imageUpload}
+                      onClick={uploadImage}
+                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {uploading ? "Uploading..." : "Upload Media"}
+                    </button>
                   </div>
-                  <p className="text-gray-500 mt-1">
-                    Supported files: JPEG, PNG, DOC, XLS, PPT.
+                  <p className="text-gray-500 text-xs mt-1">
+                    Supported media: JPEG, PNG, DOC, XLS, PPT.
                   </p>
-                  <button
-                    type="button"
-                    className="m-3 ms-0 bg-blue-500 p-2 rounded-md text-white"
-                    onClick={uploadImage}
-                  >
-                    Upload
-                  </button>
 
-                  {imageList.map((url, index) => {
-                    return (
-                      <img
-                        src={url}
-                        key={index}
-                        height={10}
-                        width={200}
-                        alt=""
-                      />
-                    );
-                  })}
+                  {imageList.length > 0 && (
+                    <div className="mt-4 border border-gray-800 bg-gray-950/40 p-4 rounded-xl max-w-sm">
+                      <p className="text-xs text-gray-500 mb-2">Uploaded Preview:</p>
+                      {imageList.map((url, index) => (
+                        <img
+                          src={url}
+                          key={index}
+                          className="rounded-lg max-h-48 w-auto border border-gray-800 object-cover"
+                          alt="Uploaded Attachment"
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </form>
             </div>
-            <div className="">
-              <form
-                onSubmit={(e) => e.preventDefault()}
-                className="border-t-2 md:border-t-0  md:border-s-2  md:min-h-screen  w-full "
-              >
-                <div className="border-b py-5 ps-3 pr-5">Configuration</div>
 
-                <div className="mt-4 px-5 py-3">
+            {/* Sidebar Configuration Panel */}
+            <div className="w-full lg:w-80 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 space-y-6">
+              <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-3">
+                Configuration
+              </h3>
+
+              <div className="space-y-5">
+                <div>
                   <label
                     htmlFor="url"
-                    className="block text-lg font-medium leading-6 text-gray-500"
+                    className="block text-sm font-semibold text-gray-400"
                   >
-                    URL<span className="text-red-500">*</span>
+                    Path URL <span className="text-red-400">*</span>
                   </label>
-                  <div className="mt-2">
+                  <div className="mt-2 relative rounded-xl shadow-sm">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-500 text-sm pointer-events-none">
+                      /
+                    </span>
                     <input
                       id="url"
                       name="url"
                       type="text"
                       value={data.url}
                       onChange={onChange}
+                      placeholder="about-us"
                       required
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      className="block w-full pl-7 rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
                     />
                   </div>
                   {errors.url && (
-                    <span className="text-red-600">{errors.url}</span>
+                    <span className="text-red-400 text-xs mt-1 block">{errors.url}</span>
                   )}
                 </div>
-                <div className="mt-4 px-5 py-3">
+
+                <div>
                   <label
                     htmlFor="author"
-                    className="block text-lg font-medium leading-6 text-gray-500"
+                    className="block text-sm font-semibold text-gray-400"
                   >
                     Author
                   </label>
@@ -629,11 +642,12 @@ function EditPageContent() {
                       type="text"
                       value={user}
                       readOnly
-                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm sm:text-sm sm:leading-6 bg-gray-100"
+                      className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-gray-500 sm:text-sm sm:leading-6 cursor-not-allowed select-none font-medium"
                     />
                   </div>
                 </div>
-                <div className="flex items-center mt-4 px-5 py-3">
+
+                <div className="flex items-center gap-3 pt-3">
                   <input
                     id="showAuthor"
                     name="showAuthor"
@@ -642,11 +656,16 @@ function EditPageContent() {
                     onChange={(e) =>
                       setData({ ...data, showAuthor: e.target.checked })
                     }
-                    className=" w-4 rounded border-gray-100  text-indigo-600 focus:ring-indigo-600"
+                    className="w-4.5 h-4.5 rounded border-gray-800 bg-gray-950 text-indigo-500 focus:ring-indigo-500/50"
                   />
-                  <p className="ms-2 text-gray-500">Show Author</p>
+                  <label
+                    htmlFor="showAuthor"
+                    className="text-sm font-semibold text-gray-400 hover:text-gray-300 cursor-pointer select-none"
+                  >
+                    Show Author Profile
+                  </label>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -657,7 +676,7 @@ function EditPageContent() {
 
 export default function EditPage() {
   return (
-    <Suspense fallback={<div className="p-8">Loading page builder...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400 font-sans">Loading page builder...</div>}>
       <EditPageContent />
     </Suspense>
   );
