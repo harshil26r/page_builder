@@ -31,6 +31,8 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 400 });
     }
 
+    const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+
     const updatedBlog = await Blog.findOneAndUpdate(
       { _id: id },
       {
@@ -38,7 +40,7 @@ export async function PUT(request) {
         subText,
         body: blogBody,
         attachments,
-        url,
+        url: normalizedUrl,
         showAuthor,
         status,
         modifiedBy: user.username,

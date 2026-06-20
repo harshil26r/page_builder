@@ -1,10 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState } from "react";
 import { RiMenu2Fill } from "react-icons/ri";
-import { Menu, Transition } from "@headlessui/react";
 import Sidebar from "@/components/Sidebar";
 import { CiSearch } from "react-icons/ci";
+import { FiMoreHorizontal } from "react-icons/fi";
 
 export default function Home() {
   const router = useRouter();
@@ -53,6 +53,14 @@ export default function Home() {
     } else {
       allBlogs();
     }
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setSelectBlogId("");
+    };
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
   const handleDelete = async () => {
@@ -229,17 +237,17 @@ export default function Home() {
 
             {/* Table Section */}
             <div className="flex-1 overflow-auto p-8">
-              <div className="border border-gray-800/80 bg-gray-900/20 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
+              <div className="border border-gray-800/80 bg-gray-900/20 backdrop-blur-md rounded-2xl shadow-lg relative z-10">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-800 bg-gray-900/40 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                      <th className="px-6 py-4">Title</th>
+                      <th className="px-6 py-4 rounded-tl-2xl">Title</th>
                       <th className="px-6 py-4">URL</th>
                       <th className="px-6 py-4">Created By</th>
                       <th className="px-6 py-4">Created At</th>
                       <th className="px-6 py-4">Modified By</th>
                       <th className="px-6 py-4">Modified At</th>
-                      <th className="px-6 py-4 text-center">Status</th>
+                      <th className="px-6 py-4 text-center rounded-tr-2xl">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800/50 text-sm text-gray-300">
@@ -247,66 +255,54 @@ export default function Home() {
                       return (
                         <tr
                           key={index}
-                          className="hover:bg-gray-800/20 transition duration-150"
+                          className={`hover:bg-gray-800/20 transition duration-150 ${
+                            selectBlogId === item._id ? "relative z-30" : ""
+                          }`}
                         >
-                          <td className="px-6 py-4">
+                          <td className={`px-6 py-4 ${selectBlogId === item._id ? "relative z-30" : ""}`}>
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-white">{item.title}</span>
-                              <Menu as="div" className="relative inline-block text-left ml-4">
-                                <div>
-                                  <Menu.Button
-                                    onClick={() => setSelectBlogId(item._id)}
-                                    className="inline-flex justify-center rounded-lg border border-gray-800/80 bg-gray-900/60 p-1 px-2.5 text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
-                                  >
-                                    •••
-                                  </Menu.Button>
-                                </div>
-                                <Transition
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
+                              <div className={`relative inline-block text-left ml-4 ${selectBlogId === item._id ? "z-40" : ""}`}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectBlogId(selectBlogId === item._id ? "" : item._id);
+                                  }}
+                                  className="inline-flex items-center justify-center rounded-lg border border-gray-800/80 bg-gray-900/60 p-1 px-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
                                 >
-                                  <Menu.Items className="absolute left-0 mt-2 w-32 origin-top-left rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl focus:outline-none z-20">
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => {
-                                            router.push(
-                                              `/editpage?id=${selectBlogId}`
-                                            );
-                                          }}
-                                          className={classNames(
-                                            active ? "bg-gray-800 text-white" : "text-gray-400",
-                                            "block w-full text-left px-4 py-2 text-xs font-medium transition duration-150"
-                                          )}
-                                        >
-                                          Edit
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={handleDelete}
-                                          className={classNames(
-                                            active ? "bg-red-500/10 text-red-400" : "text-red-400/80",
-                                            "block w-full text-left px-4 py-2 text-xs font-medium transition duration-150"
-                                          )}
-                                        >
-                                          Delete
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </Menu.Items>
-                                </Transition>
-                              </Menu>
+                                  <FiMoreHorizontal size={16} />
+                                </button>
+                                {selectBlogId === item._id && (
+                                  <div className="absolute right-0 mt-2 w-32 rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl focus:outline-none z-50">
+                                    <button
+                                      onClick={() => {
+                                        router.push(`/editpage?id=${item._id}`);
+                                      }}
+                                      className="block w-full text-left px-4 py-2 text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition duration-150"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={handleDelete}
+                                      className="block w-full text-left px-4 py-2 text-xs font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition duration-150"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-xs font-mono text-gray-400">{item.url}</td>
+                          <td className="px-6 py-4 text-xs font-mono">
+                            <a
+                              href={item.url.startsWith('/') ? item.url : '/' + item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-400 hover:text-indigo-300 hover:underline transition duration-150"
+                            >
+                              {item.url}
+                            </a>
+                          </td>
                           <td className="px-6 py-4">{item.createdBy}</td>
                           <td className="px-6 py-4 text-xs text-gray-400">{item.createdAt}</td>
                           <td className="px-6 py-4">{item.modifiedBy}</td>

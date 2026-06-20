@@ -1,6 +1,8 @@
 "use client";
 import Sidebar from "@/components/Sidebar";
+import RichTextEditor from "@/components/RichTextEditor";
 import { IoIosArrowBack } from "react-icons/io";
+import { FiMoreHorizontal } from "react-icons/fi";
 import { jwtDecode } from "jwt-decode";
 import React, { useState, useEffect, Fragment, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -24,6 +26,7 @@ function EditPageContent() {
   const [imageUpload, setImageUpload] = useState(null);
   const [imageList, setImageList] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
 
   const imageListRef = ref(storage, "images/");
 
@@ -90,6 +93,14 @@ function EditPageContent() {
         });
       });
     });
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setShowActionsDropdown(false);
+    };
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
   const uploadImage = () => {
@@ -245,6 +256,40 @@ function EditPageContent() {
     }
   };
 
+  const handleDeleteBlog = async () => {
+    const targetId = id || currentBlogId;
+    if (!targetId) return;
+
+    if (!confirm("Are you sure you want to delete this page?")) return;
+
+    try {
+      const res = await fetch(`/api/blog/deleteBlog`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: targetId,
+        }),
+      });
+      const response = await res.json();
+      if (response.success) {
+        toast.success("Page deleted successfully!", {
+          position: "bottom-center",
+          autoClose: 1000,
+        });
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
+      } else {
+        toast.error(response.error || "Failed to delete page.");
+      }
+    } catch (error) {
+      console.error("Error deleting blog:", error);
+      toast.error("An error occurred while deleting the page.");
+    }
+  };
+
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");
   }
@@ -268,7 +313,7 @@ function EditPageContent() {
         <div className="flex flex-col w-full h-fit scroll-m-0">
           
           {/* Header Action Bar */}
-          <div className="flex flex-col md:flex-row p-6 w-full justify-between items-center border-b border-gray-800 bg-gray-900/10 backdrop-blur-sm gap-4">
+          <div className="relative z-30 flex flex-col md:flex-row p-6 w-full justify-between items-center border-b border-gray-800 bg-gray-900/10 backdrop-blur-sm gap-4">
             <div className="flex items-center gap-4">
               <button
                 className="flex items-center justify-center h-10 w-10 rounded-xl border border-gray-800 bg-gray-900/40 text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
@@ -300,49 +345,37 @@ function EditPageContent() {
 
             <ul className="flex items-center gap-3">
               <li>
-                <Menu as="div" className="relative">
-                  <Menu.Button className="flex items-center justify-center h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/40 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150">
-                    Actions •••
-                  </Menu.Button>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
+                <div className="relative z-40">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowActionsDropdown(!showActionsDropdown);
+                    }}
+                    className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/40 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
                   >
-                    <Menu.Items className="absolute right-0 mt-2 w-36 origin-top-right rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl z-20">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="#"
-                            className={classNames(
-                              active ? "bg-gray-800 text-white" : "text-gray-400",
-                              "block px-4 py-2 text-xs font-medium transition duration-150"
-                            )}
-                          >
-                            Preview
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="#"
-                            className={classNames(
-                              active ? "bg-red-500/10 text-red-400" : "text-red-400/80",
-                              "block px-4 py-2 text-xs font-medium transition duration-150"
-                            )}
-                          >
-                            Delete
-                          </a>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                    Actions <FiMoreHorizontal size={14} />
+                  </button>
+                  {showActionsDropdown && (
+                    <div className="absolute right-0 mt-2 w-36 rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl z-50">
+                      <a
+                        href={data.url ? (data.url.startsWith('/') ? data.url : '/' + data.url) + "?preview=true" : "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full text-left px-4 py-2 text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition duration-150"
+                      >
+                        Preview
+                      </a>
+                      {(id || currentBlogId) && (
+                        <button
+                          onClick={handleDeleteBlog}
+                          className="block w-full text-left px-4 py-2 text-xs font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition duration-150"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </li>
               <li>
                 <button
@@ -528,21 +561,14 @@ function EditPageContent() {
                 <div>
                   <label
                     htmlFor="body"
-                    className="block text-sm font-semibold text-gray-400"
+                    className="block text-sm font-semibold text-gray-400 mb-2"
                   >
-                    Body Content
+                    Body Content (Markdown / HTML / SVGs)
                   </label>
-                  <div className="mt-2">
-                    <textarea
-                      id="body"
-                      name="body"
-                      value={data.body}
-                      onChange={onChange}
-                      placeholder="Write your HTML or Markdown content here..."
-                      rows="8"
-                      className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200 resize-y font-mono text-sm"
-                    />
-                  </div>
+                  <RichTextEditor
+                    value={data.body}
+                    onChange={(val) => setData({ ...data, body: val || "" })}
+                  />
                 </div>
 
                 <div>

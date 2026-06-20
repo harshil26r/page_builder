@@ -24,12 +24,14 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Blog already exist" }, { status: 400 });
     }
 
+    const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+
     const newBlog = new Blog({
       title,
       subText,
       body,
       attachments,
-      url,
+      url: normalizedUrl,
       showAuthor,
       authorEmail: user.email,
       createdBy: user.username,

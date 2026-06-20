@@ -1,10 +1,15 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
+import { checkAndPublishScheduled } from "@/middleware/publisher";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     await dbConnect();
+    // Dynamically publish scheduled pages whose publish time has arrived
+    await checkAndPublishScheduled();
     const blog = await Blog.find();
     return NextResponse.json({ blog });
   } catch (error) {

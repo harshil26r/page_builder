@@ -1,33 +1,25 @@
-// components/MyEditor.js
-
-import React, { useState } from "react";
+"use client";
+import React from "react";
 import dynamic from "next/dynamic";
-import { EditorState, convertToRaw } from "draft-js";
-import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 
-const Editor = dynamic(
-  () => import("react-draft-wysiwyg").then((mod) => mod.Editor),
+const MDEditor = dynamic(
+  () => import("@uiw/react-md-editor"),
   { ssr: false }
 );
 
-function MyEditor({ onChange }) {
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
-
-  const onEditorStateChange = (newEditorState) => {
-    setEditorState(newEditorState);
-    const content = convertToRaw(newEditorState.getCurrentContent());
-    onChange(content);
-    // console.log(content); // Log the content to verify
-  };
-
+export default function RichTextEditor({ value, onChange }) {
   return (
-    <div>
-      <Editor
-        editorState={editorState}
-        onEditorStateChange={onEditorStateChange}
+    <div className="w-full border border-gray-800 rounded-xl overflow-hidden bg-gray-950 shadow-inner" data-color-mode="dark">
+      <MDEditor
+        value={value}
+        onChange={onChange}
+        preview="live"
+        height={450}
+        textareaProps={{
+          placeholder: "Type Markdown or HTML here. Supports inline SVG tags, images, custom classes, links, tables, and more...",
+        }}
+        className="w-full text-sm font-sans"
       />
     </div>
   );
 }
-
-export default MyEditor;
