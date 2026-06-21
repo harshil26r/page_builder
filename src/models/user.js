@@ -1,27 +1,59 @@
-const mongoose = require("mongoose");
+import bcrypt from 'bcryptjs';
+import { Schema, model, models } from 'mongoose';
 
-const UserSchema = new mongoose.Schema(
+const userSchema = new Schema(
   {
-    username: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    address: { type: String, required: false },
-    image: { type: String, required: false },
-    isSubscribe: { type: Boolean, required: false },
-    role: { type: String, required: false, default: "admin" },
+    username: {
+      type: String,
+      trim: true,
+      minLength: 3,
+      required: true,
+    },
+    email: {
+      type: String,
+      lowercase: true,
+      trim: true,
+      required: true,
+      unique: true,
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        'please enter a valid email',
+      ],
+    },
+    password: { type: String, minLength: 3, required: true },
+    image: {
+      type: String,
+      required: false,
+    },
+    address: {
+      type: String,
+      required: false,
+    },
+    isSubscribe: {
+      type: Boolean,
+      required: false,
+    },
+    role: {
+      type: String,
+      required: false,
+      default: 'admin',
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strict: 'throw',
+  },
 );
 
-const modelName = "User";
-let User;
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  if (!this.password) return;
+  this.password = await bcrypt.hash(this.password, 12);
+});
 
-try {
-  // Check if the model is already defined
-  User = mongoose.model(modelName);
-} catch (error) {
-  // Define the model if it doesn't exist
-  User = mongoose.model(modelName, UserSchema);
-}
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
-module.exports = User;
+export const User = models.User || model('User', userSchema);
+export default User;

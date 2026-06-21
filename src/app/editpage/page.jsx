@@ -3,7 +3,6 @@ import Sidebar from "@/components/Sidebar";
 import RichTextEditor from "@/components/RichTextEditor";
 import { IoIosArrowBack } from "react-icons/io";
 import { FiMoreHorizontal } from "react-icons/fi";
-import { jwtDecode } from "jwt-decode";
 import React, { useState, useEffect, Fragment, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
@@ -71,18 +70,24 @@ function EditPageContent() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.push("/auth/login");
-      return;
-    }
-    const decoded = jwtDecode(token);
-    setUser(decoded.username);
-
-    if (id) {
-      getBlogData(id);
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const response = await res.json();
+        if (response.success) {
+          setUser(response.user.username);
+          if (id) {
+            getBlogData(id);
+          }
+        } else {
+          router.push("/auth/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        router.push("/auth/login");
+      }
+    };
+    checkAuth();
   }, [id]);
 
   useEffect(() => {
@@ -164,8 +169,6 @@ function EditPageContent() {
   };
 
   const saveBlog = async () => {
-    const token = localStorage.getItem("token");
-
     if (!id) {
       const res = await fetch(`/api/blog/creatBlog`, {
         method: "POST",
@@ -173,7 +176,6 @@ function EditPageContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token,
           title: data.title,
           subText: data.subText,
           body: data.body,
@@ -202,7 +204,6 @@ function EditPageContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token,
           id: id,
           title: data.title,
           subText: data.subText,

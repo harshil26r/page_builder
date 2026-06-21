@@ -1,20 +1,31 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import User from "@/models/user";
 import Blog from "@/models/blog";
-import jwt from "jsonwebtoken";
+import Session from "@/models/session";
 import moment from "moment";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
     await dbConnect();
     const bodyData = await request.json();
-    const { token, title, subText, body, attachments, url, showAuthor } = bodyData;
+    const { title, subText, body, attachments, url, showAuthor } = bodyData;
 
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
-    const decoded = jwt.verify(token, process.env.SecretKey);
-    const user = await User.findOne({ email: decoded.email });
+    const cookieStore = cookies();
+    const sid = cookieStore.get("sid")?.value;
+    if (!sid) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Please login first" }, { status: 401 });
+    }
+
+    const sessionObj = await Session.findById(sid);
+    if (!sessionObj) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Session expired or invalid" }, { status: 401 });
+    }
+
+    const user = await User.findById(sessionObj.userId);
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 400 });
     }

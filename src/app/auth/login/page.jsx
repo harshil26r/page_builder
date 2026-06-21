@@ -15,9 +15,18 @@ const Login = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      router.push("/");
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const response = await res.json();
+        if (response.success) {
+          router.push("/");
+        }
+      } catch (err) {
+        // Not authenticated, stay on page
+      }
+    };
+    checkAuth();
   }, []);
 
   const onChange = (e) => {
@@ -53,7 +62,6 @@ const Login = () => {
 
       const response = await res.json();
       if (response.success) {
-        localStorage.setItem("token", response.token);
         toast.success("Login successful! Redirecting...", {
           position: "bottom-center",
           autoClose: 1000,

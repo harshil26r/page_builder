@@ -47,12 +47,21 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
-    } else {
-      allBlogs();
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const response = await res.json();
+        if (response.success) {
+          allBlogs();
+        } else {
+          router.push("/auth/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        router.push("/auth/login");
+      }
+    };
+    checkAuth();
   }, []);
 
   useEffect(() => {

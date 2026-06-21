@@ -9,7 +9,14 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handelLogOut = () => {
+  const handelLogOut = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } catch (err) {
+      console.error("Error logging out from server:", err);
+    }
     localStorage.removeItem("token");
     router.push("/auth/login");
   };

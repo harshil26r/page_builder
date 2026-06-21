@@ -21,9 +21,18 @@ const Signup = () => {
   });
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      router.push("/");
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const response = await res.json();
+        if (response.success) {
+          router.push("/");
+        }
+      } catch (err) {
+        // Not authenticated, stay on page
+      }
+    };
+    checkAuth();
   }, []);
 
   const onChange = (e) => {

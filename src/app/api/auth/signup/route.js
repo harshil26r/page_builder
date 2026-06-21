@@ -1,6 +1,5 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import User from "@/models/user";
-import CryptoJS from "crypto-js";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -14,13 +13,11 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Email alredy in use!" }, { status: 400 });
     }
 
-    const encryptedPassword = CryptoJS.AES.encrypt(password, process.env.SecretKey).toString();
-
     const u = new User({
       username,
       email,
       isSubscribe,
-      password: encryptedPassword,
+      password,
     });
     await u.save();
 

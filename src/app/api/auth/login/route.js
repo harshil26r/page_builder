@@ -1,7 +1,6 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import User from "@/models/user";
-import CryptoJS from "crypto-js";
-import jwt from "jsonwebtoken";
+import Session from "@/models/session";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -15,18 +14,35 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalide credentials" }, { status: 400 });
     }
 
-    const bytes = CryptoJS.AES.decrypt(user.password, process.env.SecretKey);
-    const decryptedPass = bytes.toString(CryptoJS.enc.Utf8);
-
-    if (email === user.email && password === decryptedPass) {
-      const token = jwt.sign(
-        { email: user.email, role: user.role, username: user.username },
-        process.env.SecretKey
-      );
-      return NextResponse.json({ success: true, token });
-    } else {
+    const validPass = await user.comparePassword(password);
+    if (!validPass) {
       return NextResponse.json({ success: false, error: "Invalide credentials" }, { status: 400 });
     }
+
+    // Create session in MongoDB
+    const dbSession = await Session.create({ userId: user._id });
+
+    // Create response
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
+    // Set HTTP-only session cookie
+    response.cookies.set({
+      name: "sid",
+      value: dbSession._id.toString(),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 5, // 5 hours
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login API error:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

@@ -1,5 +1,5 @@
 // src/middleware/polyfill.js
-const buffer = require("buffer");
+import buffer from "buffer";
 
 if (!buffer.SlowBuffer) {
   buffer.SlowBuffer = class SlowBuffer {};

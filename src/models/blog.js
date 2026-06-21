@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import { Schema, model, models } from "mongoose";
 
-const BlogSchema = new mongoose.Schema(
+const BlogSchema = new Schema(
   {
     title: { type: String, required: true, unique: true },
     subText: { type: String, required: true },
@@ -18,15 +18,5 @@ const BlogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const modelName = "Blog";
-let Blog;
-
-try {
-  // Check if the model is already defined
-  Blog = mongoose.model(modelName);
-} catch (error) {
-  // Define the model if it doesn't exist
-  Blog = mongoose.model(modelName, BlogSchema);
-}
-
-module.exports = Blog;
+export const Blog = models.Blog || model("Blog", BlogSchema);
+export default Blog;

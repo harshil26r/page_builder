@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import { Schema, model, models } from "mongoose";
 
-const OtpSchema = new mongoose.Schema({
+const OtpSchema = new Schema({
   email: {
     type: String,
     required: true,
@@ -17,13 +17,5 @@ const OtpSchema = new mongoose.Schema({
   },
 });
 
-const modelName = "OTP";
-let OTP;
-
-try {
-  OTP = mongoose.model(modelName);
-} catch (error) {
-  OTP = mongoose.model(modelName, OtpSchema);
-}
-
+export const OTP = models.OTP || model("OTP", OtpSchema);
 export default OTP;
