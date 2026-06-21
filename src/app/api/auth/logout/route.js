@@ -1,5 +1,6 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Session from "@/models/session";
+import { unsignCookie } from "@/middleware/cookieSigner";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -7,7 +8,8 @@ export async function POST() {
   try {
     await dbConnect();
     const cookieStore = cookies();
-    const sid = cookieStore.get("sid")?.value;
+    const rawSid = cookieStore.get("sid")?.value;
+    const sid = rawSid ? unsignCookie(rawSid) : null;
 
     if (sid) {
       await Session.findByIdAndDelete(sid);

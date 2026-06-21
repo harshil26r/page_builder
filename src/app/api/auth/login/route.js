@@ -1,6 +1,7 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import User from "@/models/user";
 import Session from "@/models/session";
+import { signCookie } from "@/middleware/cookieSigner";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -35,7 +36,7 @@ export async function POST(request) {
     // Set HTTP-only session cookie
     response.cookies.set({
       name: "sid",
-      value: dbSession._id.toString(),
+      value: signCookie(dbSession._id.toString()),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 5, // 5 hours

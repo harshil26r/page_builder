@@ -3,6 +3,7 @@ import Blog from "@/models/blog";
 import User from "@/models/user";
 import Session from "@/models/session";
 import moment from "moment";
+import { unsignCookie } from "@/middleware/cookieSigner";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -26,7 +27,8 @@ export async function PUT(request) {
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
     const cookieStore = cookies();
-    const sid = cookieStore.get("sid")?.value;
+    const rawSid = cookieStore.get("sid")?.value;
+    const sid = rawSid ? unsignCookie(rawSid) : null;
     if (!sid) {
       return NextResponse.json({ success: false, error: "Unauthorized: Please login first" }, { status: 401 });
     }
