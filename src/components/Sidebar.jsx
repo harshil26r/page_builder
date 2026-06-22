@@ -22,7 +22,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen sticky top-0">
       <aside className="flex flex-col w-20 items-center bg-gray-900/60 border-r border-gray-800/80 text-gray-400 backdrop-blur-md py-6 px-2">
         <div className="flex flex-col items-center flex-1 space-y-8 w-full">
           {/* Logo / Branding */}

@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from "@/components/Sidebar";
 import RichTextEditor from "@/components/RichTextEditor";
+import MarkdownRender from "@/components/MarkdownRender";
 import { IoIosArrowBack } from "react-icons/io";
 import { FiMoreHorizontal } from "react-icons/fi";
 import React, { useState, useEffect, Fragment, Suspense } from "react";
@@ -26,6 +27,8 @@ function EditPageContent() {
   const [imageList, setImageList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [viewMode, setViewMode] = useState("split");
+  const [previewDevice, setPreviewDevice] = useState("desktop");
 
   const imageListRef = ref(storage, "images/");
 
@@ -78,6 +81,14 @@ function EditPageContent() {
           setUser(response.user.username);
           if (id) {
             getBlogData(id);
+          } else {
+            setData(prev => ({
+              ...prev,
+              title: "Demo Landing Page",
+              subText: "This is a gorgeous demo page created with Rapid Page Builder",
+              body: `# Welcome to your new page! 🚀\n\nThis is a live preview of your content. You can edit this directly in the editor on the left!\n\n## Features:\n- **Interactive Split-Screen Preview:** See your changes in real-time.\n- **Responsive Sizing:** Test layout on Desktop, Tablet, or Mobile.\n- **Full Markdown Support:** Style your pages with headers, lists, code, and blockquotes.\n\n### Code Example:\n\`\`\`javascript\nconst hello = \"World\";\nconsole.log(\`Hello, \${hello}!\`);\n\`\`\`\n\n> [!NOTE]\n> Start editing the fields on the left to customize this page!`,
+              url: "demo-page",
+            }));
           }
         } else {
           router.push("/auth/login");
@@ -345,6 +356,24 @@ function EditPageContent() {
             </div>
 
             <ul className="flex items-center gap-3">
+              <li className="hidden md:block">
+                <div className="flex items-center gap-1 bg-gray-900/80 border border-gray-800 p-0.5 rounded-xl text-xs font-semibold text-gray-400">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("editor")}
+                    className={`px-3 py-1.5 rounded-lg transition duration-150 ${viewMode === "editor" ? "bg-gray-800 text-white shadow-sm font-bold" : "hover:text-white"}`}
+                  >
+                    Editor View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("split")}
+                    className={`px-3 py-1.5 rounded-lg transition duration-150 ${viewMode === "split" ? "bg-gray-800 text-white shadow-sm font-bold" : "hover:text-white"}`}
+                  >
+                    Split View
+                  </button>
+                </div>
+              </li>
               <li>
                 <div className="relative z-40">
                   <button
@@ -460,7 +489,7 @@ function EditPageContent() {
                                 value={data.publishTime}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                               />
                             </div>
                           </div>
@@ -480,7 +509,7 @@ function EditPageContent() {
                                 value={data.publishDate}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                               />
                             </div>
                           </div>
@@ -509,9 +538,9 @@ function EditPageContent() {
           </div>
 
           {/* Builder / Configuration Sections */}
-          <div className="flex flex-col lg:flex-row gap-6 p-8">
+          <div className="flex flex-col xl:flex-row gap-6 p-8 items-start">
             {/* Editor Workspace */}
-            <div className="flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 md:p-8 space-y-6">
+            <div className={`flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 md:p-8 space-y-6 w-full ${viewMode === "split" ? "xl:max-w-[45%]" : ""}`}>
               <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                 <div>
                   <label
@@ -621,8 +650,81 @@ function EditPageContent() {
               </form>
             </div>
 
+            {/* Live Preview Panel */}
+            {viewMode === "split" && (
+              <div className="flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 flex flex-col min-w-0 w-full xl:max-w-[40%] sticky top-24 self-start">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Preview
+                  </h3>
+                  <div className="flex items-center gap-1 bg-gray-900/85 border border-gray-800 p-0.5 rounded-lg text-xs font-semibold text-gray-400">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDevice("desktop")}
+                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "desktop" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
+                    >
+                      Desktop
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDevice("tablet")}
+                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "tablet" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
+                    >
+                      Tablet
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDevice("mobile")}
+                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "mobile" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
+                    >
+                      Mobile
+                    </button>
+                  </div>
+                </div>
+
+                {/* Device Preview Screen Frame */}
+                <div className="flex-1 overflow-auto bg-gray-950/50 rounded-xl border border-gray-800/60 p-4 flex justify-center items-start min-h-[450px]">
+                  <div 
+                    className={`bg-gray-950 border border-gray-850 rounded-xl shadow-2xl overflow-y-auto transition-all duration-300 ${
+                      previewDevice === "mobile" ? "w-[320px] h-[568px]" :
+                      previewDevice === "tablet" ? "w-[500px] h-[650px]" :
+                      "w-full h-full"
+                    }`}
+                  >
+                    {/* Mock Browser Header */}
+                    <div className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center gap-2 text-xs text-gray-500 rounded-t-xl select-none">
+                      <div className="flex gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-red-500/60"></span>
+                        <span className="w-2 h-2 rounded-full bg-yellow-500/60"></span>
+                        <span className="w-2 h-2 rounded-full bg-green-500/60"></span>
+                      </div>
+                      <div className="bg-gray-950/80 border border-gray-855 px-3 py-0.5 rounded-md text-gray-400 font-mono text-[9px] flex-1 max-w-[200px] mx-auto truncate text-center">
+                        {data.url ? `/${data.url}` : "/new-page"}
+                      </div>
+                    </div>
+                    
+                    {/* Rendered content */}
+                    <div className="p-6 font-sans">
+                      <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-2 leading-tight">
+                        {data.title || "Untitled Page"}
+                      </h1>
+                      {data.subText && (
+                        <p className="text-gray-400 font-medium text-xs mb-4 leading-relaxed">
+                          {data.subText}
+                        </p>
+                      )}
+                      <div className="border-t border-gray-800/80 pt-4">
+                        <MarkdownRender source={data.body} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Sidebar Configuration Panel */}
-            <div className="w-full lg:w-80 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 space-y-6">
+            <div className="w-full xl:w-80 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 space-y-6">
               <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-3">
                 Configuration
               </h3>
@@ -647,7 +749,7 @@ function EditPageContent() {
                       onChange={onChange}
                       placeholder="about-us"
                       required
-                      className="block w-full pl-7 rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
+                      className="block w-full pl-7 rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
                     />
                   </div>
                   {errors.url && (
@@ -669,7 +771,7 @@ function EditPageContent() {
                       type="text"
                       value={user}
                       readOnly
-                      className="block w-full rounded-xl border border-gray-800 bg-gray-955 py-2.5 px-3.5 text-gray-500 sm:text-sm sm:leading-6 cursor-not-allowed select-none font-medium"
+                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-gray-500 sm:text-sm sm:leading-6 cursor-not-allowed select-none font-medium"
                     />
                   </div>
                 </div>
