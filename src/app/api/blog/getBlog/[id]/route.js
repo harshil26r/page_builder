@@ -1,0 +1,21 @@
+import { dbConnect } from "@/middleware/mongoConnect";
+import Blog from "@/models/blog";
+import { NextResponse } from "next/server";
+
+export async function GET(request, { params }) {
+  try {
+    await dbConnect();
+    const id = params.id;
+
+    const blog = await Blog.findById(id);
+
+    if (!blog) {
+      return NextResponse.json({ success: false, error: "Blog not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, blog });
+  } catch (error) {
+    console.error("Error fetching blog:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+  }
+}

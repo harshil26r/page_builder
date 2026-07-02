@@ -1,8 +1,9 @@
+"use client";
 import Sidebar from "@/components/Sidebar";
 import { IoIosArrowBack } from "react-icons/io";
 import { jwtDecode } from "jwt-decode";
-import { React, useState, useEffect, Fragment } from "react";
-import { useRouter } from "next/router";
+import React, { useState, useEffect, Fragment, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -11,48 +12,20 @@ import { storage } from "@/components/firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
 import RichTextEditor from "@/components/RichTextEditor";
 
-export default function EditPage() {
+function EditPageContent() {
   const router = useRouter();
-  const { id } = router.query;
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+
   const [user, setUser] = useState("");
   const [open, setOpen] = useState(false);
   const [currentBlogId, setCurrentBlogId] = useState("");
   const [currentBlog, setCurrentBlog] = useState({});
   const [errors, setErrors] = useState({});
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.push("/auth/login");
-    }
-    const decoded = jwtDecode(token);
-
-    if (id) {
-      getBlogData();
-    }
-    setUser(decoded.username);
-  }, []);
-
   const [imageUpload, setImageUpload] = useState(null);
   const [imageList, setImageList] = useState([]);
-  const imageListRef = ref(storage, "images/");
-  useEffect(() => {
-    listAll(imageListRef).then((res) => {
-      res.items.forEach((item) => {
-        getDownloadURL(item).then((url) => {
-          setImageList((prev) => [url]);
-        });
-      });
-    });
-  }, []);
-  const uploadImage = () => {
-    if (imageUpload === null) return;
 
-    const imageRef = ref(storage, `images/${imageUpload.name}`);
-    uploadBytes(imageRef, imageUpload).then(() => {
-      console.log("imageUpload");
-    });
-  };
+  const imageListRef = ref(storage, "images/");
 
   const [data, setData] = useState({
     title: "",
@@ -66,6 +39,70 @@ export default function EditPage() {
     publishDate: "",
   });
 
+  const getBlogData = async (blogId) => {
+    try {
+      const res = await fetch(`/api/blog/getBlog/${blogId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const response = await res.json();
+      if (response && response.blog) {
+        setCurrentBlogId(response.blog._id);
+        setCurrentBlog(response.blog);
+        setData({
+          title: response.blog.title || "",
+          subText: response.blog.subText || "",
+          body: response.blog.body || "",
+          url: response.blog.url || "",
+          showAuthor: !!response.blog.showAuthor,
+          status: response.blog.status || "",
+          publishTime: response.blog.publishTime || "",
+          publishDate: response.blog.publishDate || "",
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching blog:", err);
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+    const decoded = jwtDecode(token);
+    setUser(decoded.username);
+
+    if (id) {
+      getBlogData(id);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    listAll(imageListRef).then((res) => {
+      res.items.forEach((item) => {
+        getDownloadURL(item).then((url) => {
+          setImageList((prev) => [url]);
+        });
+      });
+    });
+  }, []);
+
+  const uploadImage = () => {
+    if (imageUpload === null) return;
+
+    const imageRef = ref(storage, `images/${imageUpload.name}`);
+    uploadBytes(imageRef, imageUpload).then(() => {
+      console.log("imageUpload done");
+      // Add visual confirmation
+      toast.success("Image uploaded successfully!");
+    });
+  };
+
   const onChange = (e) => {
     const { name, value } = e.target;
 
@@ -77,36 +114,9 @@ export default function EditPage() {
     setErrors({ ...errors, [name]: "" });
   };
 
-  const getBlogData = async () => {
-    const res = await fetch(`http://localhost:3000/api/blog/getBlog/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const response = await res.json();
-    console.log(response.blog._id);
-    setCurrentBlogId(response.blog._id);
-    setCurrentBlog(response.blog);
-    console.log(currentBlogId);
-
-    setData({
-      title: response.blog.title,
-      subText: response.blog.subText,
-      body: response.blog.body,
-      // attachments: response.blog.attachments,
-      url: response.blog.url,
-      showAuthor: response.blog.showAuthor,
-      status: response.blog.status,
-      publishTime: response.blog.publishTime,
-      publishDate: response.blog.publishDate,
-    });
-  };
-
   const validateForm = (e) => {
     e.preventDefault();
     let isValid = true;
-
     const newErrors = {};
 
     // title validation
@@ -114,7 +124,7 @@ export default function EditPage() {
       newErrors.title = "Title is required";
       isValid = false;
     } else if (data.title.trim().length < 5) {
-      newErrors.title = "Title is minimum 4 charecter";
+      newErrors.title = "Title is minimum 4 character";
       isValid = false;
     }
 
@@ -124,7 +134,7 @@ export default function EditPage() {
       isValid = false;
     }
 
-    // subText validation
+    // url validation
     if (!data.url.trim()) {
       newErrors.url = "URL is required";
       isValid = false;
@@ -143,7 +153,7 @@ export default function EditPage() {
     const token = localStorage.getItem("token");
 
     if (!id) {
-      const res = await fetch(`http://localhost:3000/api/blog/creatBlog`, {
+      const res = await fetch(`/api/blog/creatBlog`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,32 +169,20 @@ export default function EditPage() {
         }),
       });
       const response = await res.json();
-      setCurrentBlogId(response.id);
       if (response.success) {
-        toast.success("Your Blog  save as Draft!", {
+        setCurrentBlogId(response.id);
+        toast.success("Your Blog saved as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
         });
       } else {
-        toast.error("Blog is Alredy exsist!", {
+        toast.error("Blog already exists!", {
           position: "bottom-center",
           autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
         });
       }
     } else {
-      const res = await fetch(`http://localhost:3000/api/blog/updateBlog`, {
+      const res = await fetch(`/api/blog/updateBlog`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -201,74 +199,45 @@ export default function EditPage() {
         }),
       });
       const response = await res.json();
-      console.log(response.updatedBlog._id);
-      setCurrentBlogId(id);
       if (response.success) {
+        setCurrentBlogId(id);
         toast.success("Your Blog updated as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
         });
       } else {
-        toast.error("Blog is Alredy exsist!", {
+        toast.error("Blog already exists!", {
           position: "bottom-center",
           autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
         });
       }
     }
   };
 
   const addPublishTime = async () => {
-    const res = await fetch(
-      `http://localhost:3000/api/blog/addBlogPublishTime`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: currentBlogId,
-          status: "scheduled",
-          publishTime: data.publishTime,
-          publishDate: data.publishDate,
-        }),
-      }
-    );
+    const res = await fetch(`/api/blog/addBlogPublishTime`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: currentBlogId || id,
+        status: "scheduled",
+        publishTime: data.publishTime,
+        publishDate: data.publishDate,
+      }),
+    });
     const response = await res.json();
     if (response.success) {
       toast.success(response.message, {
         position: "bottom-center",
         autoClose: 1000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
       });
-
       router.push("/");
     } else {
-      toast.error(response.message, {
+      toast.error(response.message || "Failed to publish", {
         position: "bottom-center",
         autoClose: 1000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
       });
     }
   };
@@ -296,15 +265,11 @@ export default function EditPage() {
         <div className="flex flex-col w-full h-fit scroll-m-0 ">
           <div className="flex flex-col md:flex-row p-6 w-full justify-center h-fit  border-b-2 ">
             <div className="flex flex-row justify-center items-center">
-              <button className="text-xl me-5">
-                <IoIosArrowBack
-                  onClick={() => {
-                    router.push("/");
-                  }}
-                />
+              <button className="text-xl me-5" onClick={() => router.push("/")}>
+                <IoIosArrowBack />
               </button>
               <p className="font-medium text-xl mt-1 me-5">Home Page</p>
-              {id && (
+              {(id || currentBlogId) && (
                 <span
                   className={`${
                     currentBlog.status === "draft"
@@ -316,7 +281,7 @@ export default function EditPage() {
                       : ""
                   } font-medium text-base p-2  rounded-md`}
                 >
-                  {currentBlog.status}
+                  {currentBlog.status || "draft"}
                 </span>
               )}
             </div>
@@ -349,7 +314,7 @@ export default function EditPage() {
                                 "block px-4 py-2 text-sm text-gray-700"
                               )}
                             >
-                              Priview
+                              Preview
                             </a>
                           )}
                         </Menu.Item>
@@ -372,7 +337,10 @@ export default function EditPage() {
                 </div>
               </li>
               <li>
-                <button className="bg-white border rounded p-1 me-3">
+                <button
+                  onClick={() => router.push("/")}
+                  className="bg-white border rounded p-1 me-3"
+                >
                   Cancel
                 </button>
               </li>
@@ -405,7 +373,7 @@ export default function EditPage() {
                   leaveFrom="opacity-100"
                   leaveTo="opacity-0"
                 >
-                  <div className="fixed inset-0 hidden  bg-gray-500 bg-opacity-75 transition-opacity md:block" />
+                  <div className="fixed inset-0 hidden bg-gray-500 bg-opacity-75 transition-opacity md:block" />
                 </Transition.Child>
 
                 <div className="fixed  inset-0 z-10 bg-gray-500 bg-opacity-15 overflow-y-auto">
@@ -437,7 +405,7 @@ export default function EditPage() {
                         <div className="mt-6 p-4">
                           <div>
                             <label
-                              htmlFor="publishdate"
+                              htmlFor="publishTime"
                               className="block text-base font-normal leading-6 text-gray-500"
                             >
                               <span className="text-red-500">*</span> Publish
@@ -450,7 +418,6 @@ export default function EditPage() {
                                 type="date"
                                 value={data.publishTime}
                                 onChange={onChange}
-                                placeholder="Enter your title"
                                 required
                                 className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm sm:leading-6"
                               />
@@ -458,7 +425,7 @@ export default function EditPage() {
                           </div>
                           <div className="mt-6 ">
                             <label
-                              htmlFor="publishtime"
+                              htmlFor="publishDate"
                               className="block text-base font-normal  leading-6 text-gray-500"
                             >
                               <span className="text-red-500">*</span> Publish
@@ -471,7 +438,6 @@ export default function EditPage() {
                                 type="time"
                                 value={data.publishDate}
                                 onChange={onChange}
-                                placeholder="Enter your content"
                                 required
                                 className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm sm:leading-6 resize-none"
                               />
@@ -480,10 +446,9 @@ export default function EditPage() {
                         </div>
                         <hr className="mt-3 " />
                         <div className="flex p-4">
-                          {" "}
                           <button
                             onClick={() => setOpen(false)}
-                            className="mt-4 ms-auto  mr-5 border py-2 px-6 focus:outline-none hover:bg-grey-400 rounded text-lg"
+                            className="mt-4 ms-auto  mr-5 border py-2 px-6 focus:outline-none hover:bg-gray-400 rounded text-lg"
                           >
                             Cancel
                           </button>
@@ -503,7 +468,7 @@ export default function EditPage() {
           </div>
           <div className="flex flex-col md:flex-row h-fit">
             <div className="w-full mb-5  md:m-8  p-3 md:p-0 ">
-              <form className="space-y-6" method="POST">
+              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                 <div>
                   <label
                     htmlFor="title"
@@ -518,9 +483,8 @@ export default function EditPage() {
                       type="text"
                       value={data.title}
                       onChange={onChange}
-                      autoComplete="title"
                       placeholder="Enter your title"
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset  sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
                     />
                   </div>
                   {errors.title && (
@@ -531,7 +495,7 @@ export default function EditPage() {
                 <div>
                   <div className="flex items-center justify-between">
                     <label
-                      htmlFor="subtext"
+                      htmlFor="subText"
                       className="block text-lg font-medium leading-6 text-gray-500"
                     >
                       Sub Text
@@ -544,19 +508,14 @@ export default function EditPage() {
                       type="text"
                       value={data.subText}
                       onChange={onChange}
-                      autoComplete="subText"
                       placeholder="Enter your sub text"
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
                     />
                   </div>
                   {errors.subText && (
                     <span className="text-red-600">{errors.subText}</span>
                   )}
                 </div>
-
-                {/* <div>
-                  <RichTextEditor onChange={handleEditorChange} />
-                </div> */}
 
                 <div>
                   <div className="flex items-center justify-between">
@@ -574,10 +533,8 @@ export default function EditPage() {
                       type="text"
                       value={data.body}
                       onChange={onChange}
-                      autoComplete="body"
                       placeholder="Enter your content here"
-                      multiple
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
                     />
                   </div>
                 </div>
@@ -597,17 +554,18 @@ export default function EditPage() {
                       name="attachments"
                       type="file"
                       onChange={(e) => {
-                        setImageUpload(e.target.files[0]);
+                        if (e.target.files && e.target.files[0]) {
+                          setImageUpload(e.target.files[0]);
+                        }
                       }}
-                      autoComplete="attachments"
-                      multiple
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-500 sm:text-sm sm:leading-6"
                     />
                   </div>
                   <p className="text-gray-500 mt-1">
-                    Supported files:JPEG.PNG.DOC.XLX.PPT.
+                    Supported files: JPEG, PNG, DOC, XLS, PPT.
                   </p>
                   <button
+                    type="button"
                     className="m-3 ms-0 bg-blue-500 p-2 rounded-md text-white"
                     onClick={uploadImage}
                   >
@@ -630,10 +588,10 @@ export default function EditPage() {
             </div>
             <div className="">
               <form
-                action=""
+                onSubmit={(e) => e.preventDefault()}
                 className="border-t-2 md:border-t-0  md:border-s-2  md:min-h-screen  w-full "
               >
-                <div className="border-b py-5 ps-3 pr-5">Configaration</div>
+                <div className="border-b py-5 ps-3 pr-5">Configuration</div>
 
                 <div className="mt-4 px-5 py-3">
                   <label
@@ -649,9 +607,8 @@ export default function EditPage() {
                       type="text"
                       value={data.url}
                       onChange={onChange}
-                      autoComplete="url"
                       required
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm focus:ring-1 focus:ring-blue-600 sm:text-sm sm:leading-6"
                     />
                   </div>
                   {errors.url && (
@@ -670,10 +627,9 @@ export default function EditPage() {
                       id="author"
                       name="author"
                       type="text"
-                      defaultValue={user}
+                      value={user}
                       readOnly
-                      autoComplete="author"
-                      className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border border-gray-300 py-1.5 px-2 text-gray-900 shadow-sm sm:text-sm sm:leading-6 bg-gray-100"
                     />
                   </div>
                 </div>
@@ -682,7 +638,7 @@ export default function EditPage() {
                     id="showAuthor"
                     name="showAuthor"
                     type="checkbox"
-                    value={data.showAuthor}
+                    checked={data.showAuthor}
                     onChange={(e) =>
                       setData({ ...data, showAuthor: e.target.checked })
                     }
@@ -696,5 +652,13 @@ export default function EditPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function EditPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading page builder...</div>}>
+      <EditPageContent />
+    </Suspense>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 import Image from "next/image";
 import lodingPic from "../../public/32-loading.png";
-import { Inter } from "next/font/google";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, Fragment } from "react";
 import { RiMenu2Fill } from "react-icons/ri";
 import { Dialog, Menu, Transition } from "@headlessui/react";
@@ -31,32 +30,36 @@ export default function Home() {
     });
   };
 
+  const allBlogs = async () => {
+    try {
+      const res = await fetch(`/api/blog/getBlogs`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const response = await res.json();
+      setBlogs(response);
+      if (response && response.blog) {
+        setFilterBlogs(response.blog);
+      }
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/auth/login");
+    } else {
+      allBlogs();
     }
-    const allBlogs = async () => {
-      try {
-        const res = await fetch(`http://localhost:3000/api/blog/getBlogs`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const response = await res.json();
-        setBlogs(response);
-        setFilterBlogs(response.blog);
-      } catch (error) {
-        console.error("Error fetching blogs:", error);
-      }
-    };
-    allBlogs();
   }, []);
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/blog/deleteBlog`, {
+      const res = await fetch(`/api/blog/deleteBlog`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -66,15 +69,18 @@ export default function Home() {
         }),
       });
       const response = await res.json();
+      if (response.success) {
+        allBlogs();
+      }
     } catch (error) {
-      console.error("Error fetching blogs:", error);
+      console.error("Error deleting blog:", error);
     }
   };
 
   // filter Blogs
   useEffect(() => {
     if (blogs.blog) {
-      const filterBlogs = blogs.blog.filter((item) => {
+      const filtered = blogs.blog.filter((item) => {
         if (
           data.searchInput &&
           !item.title.toLowerCase().includes(data.searchInput.toLowerCase())
@@ -93,9 +99,9 @@ export default function Home() {
         }
         return true;
       });
-      setFilterBlogs(filterBlogs);
+      setFilterBlogs(filtered);
     }
-  }, [data]);
+  }, [data, blogs]);
 
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");
@@ -111,9 +117,7 @@ export default function Home() {
               <div className="m-5  pr-5 md:pr-20">
                 <p className="text-3xl font-medium">No Pages Found.</p>
                 <p className="text-gray-500 mt-4">
-                  {" "}
                   Looks like you don’t have any pages yet. Let’s add a new page.
-                  Add Page
                 </p>
                 <button
                   type="submit"
@@ -127,8 +131,7 @@ export default function Home() {
               </div>
 
               <div className="hidden lg:block">
-                {" "}
-                <Image alt="map" className="" src={lodingPic}></Image>
+                <Image alt="loading" className="" src={lodingPic}></Image>
               </div>
             </div>
           </div>
@@ -142,7 +145,7 @@ export default function Home() {
               <div className="flex flex-col">
                 <p className="font-medium text-xl mt-1 mb-1 me-5">Pages</p>
                 <span className="font-light text-xs ">
-                  Creat and publish pages
+                  Create and publish pages
                 </span>
               </div>
 
@@ -169,18 +172,16 @@ export default function Home() {
                     <input
                       id="searchInput"
                       name="searchInput"
-                      type="searchInput"
+                      type="text"
                       value={data.searchInput}
-                      autoComplete="searchInput"
                       placeholder="Search"
                       onChange={onChange}
-                      required
                       className="block w-full  py-1.5 px-2 text-gray-900 shadow-sm  placeholder:text-gray-400   sm:text-sm sm:leading-6"
                     />
                   </div>
                 </div>
                 <div className="mt-4 ms-4 text-gray-400 font-normal text-sm">
-                  {blogs.blog && filterBlogs.length} records
+                  {filterBlogs.length} records
                 </div>
 
                 <div className="flex md:ms-auto mt-5 justify-center items-center">
@@ -208,7 +209,7 @@ export default function Home() {
 
                   <div className="flex">
                     <label
-                      htmlFor="createdBy"
+                      htmlFor="authorInput"
                       className="block font-normal me-5 leading-6 text-gray-400"
                     >
                       Created By
@@ -299,7 +300,7 @@ export default function Home() {
                                             }}
                                             className={classNames(
                                               active ? "bg-gray-100" : "",
-                                              "block px-4 py-2  text-sm text-gray-700"
+                                              "block w-full text-left px-4 py-2 text-sm text-gray-700"
                                             )}
                                           >
                                             Edit
@@ -312,7 +313,7 @@ export default function Home() {
                                             onClick={handleDelete}
                                             className={classNames(
                                               active ? "bg-gray-100" : "",
-                                              "block px-4 py-2 text-sm text-red-700"
+                                              "block w-full text-left px-4 py-2 text-sm text-red-700"
                                             )}
                                           >
                                             Delete

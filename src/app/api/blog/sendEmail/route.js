@@ -1,13 +1,14 @@
-// pages/api/sendEmail.js
+import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
-import User from "@/models/user";
-import connectDb from "@/middleware/mongoConnect";
 import nodemailer from "nodemailer";
 import moment from "moment";
 import cron from "node-cron";
+import { NextResponse } from "next/server";
 
-const handler = async (req, res) => {
-  if (req.method === "POST") {
+export async function POST(request) {
+  try {
+    await dbConnect();
+    
     cron.schedule("* * * * *", async () => {
       try {
         const today = new Date();
@@ -17,9 +18,8 @@ const handler = async (req, res) => {
           publishTime: { $lte: localTime },
         });
 
-        blogs.forEach(async (blog) => {
+        for (const blog of blogs) {
           blog.status = "published";
-
           await blog.save();
 
           const transporter = nodemailer.createTransport({
@@ -34,20 +34,20 @@ const handler = async (req, res) => {
             from: process.env.MY_EMAIL,
             to: blog.authorEmail,
             subject: "Daily mail",
-            text: `Today your blog will publish live!  Title${blog.title}`,
+            text: `Today your blog will publish live! Title: ${blog.title}`,
           };
 
           await transporter.sendMail(mailOptions);
           console.log("Email sent successfully");
-        });
+        }
       } catch (error) {
-        console.error("Error sending emails:", error);
+        console.error("Error sending emails in cron job:", error);
       }
     });
-    res.status(200).json({ success: true, message: "Emails will be sent" });
-  } else {
-    res.status(405).json({ success: false, error: "Method Not Allowed" });
-  }
-};
 
-export default connectDb(handler);
+    return NextResponse.json({ success: true, message: "Emails will be sent" });
+  } catch (error) {
+    console.error("Error in sendEmail API:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+  }
+}

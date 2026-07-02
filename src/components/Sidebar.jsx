@@ -1,17 +1,18 @@
+"use client";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 // import logoPic from "../../public/logo.ico";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { LuLogOut } from "react-icons/lu";
-import { useRouter } from "next/router";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handelLogOut = () => {
     localStorage.removeItem("token");
-
     router.push("/auth/login");
   };
   return (
@@ -23,7 +24,7 @@ export default function Sidebar() {
           </li>
           <li
             className={`${
-              router.pathname === "/"
+              pathname === "/"
                 ? " bg-blue-100 p-1  "
                 : "hover:bg-blue-200 p-1  "
             }
@@ -76,7 +77,7 @@ export default function Sidebar() {
           <hr className="mt-2" />
           <li
             className={`${
-              router.pathname === "/editpage"
+              pathname === "/editpage"
                 ? " bg-blue-100 p-1   rounded-md  text-lg font-semibold"
                 : "hover:bg-blue-200 p-1  t rounded-md  text-lg font-semibold"
             }
@@ -143,7 +144,7 @@ export default function Sidebar() {
         <ul className="mt-auto ">
           <li className="hover:bg-blue-100 p-1 py-3 rounded-md mb-2 flex  justify-center items-center">
             <LuLogOut
-              className="text-2xl text-gray-500"
+              className="text-2xl text-gray-500 cursor-pointer"
               onClick={handelLogOut}
             />
           </li>

@@ -1,6 +1,7 @@
+"use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const router = useRouter();
@@ -53,7 +54,6 @@ const Login = () => {
     <>
       <div className="flex min-h-screen justify-center items-center flex-col w-full px-3  mb-5 lg:px-8">
         <div className="sm:mx-auto sm:max-w-sm flex">
-          {/* <Image alt="map" className="" src={logoPic}></Image> */}
           <h2 className="mt-2 text-center text-3xl font-semibold leading-9 tracking-tight text-gray-800">
             Rapid Page Builder
           </h2>
@@ -114,7 +114,7 @@ const Login = () => {
               <div className="mt-4 text-center text-gray-500">
                 Not a register User?{" "}
                 <Link
-                  href="signup"
+                  href="/auth/signup"
                   className=" underline text-blue-600 hover:text-blue-500"
                 >
                   Sign Up

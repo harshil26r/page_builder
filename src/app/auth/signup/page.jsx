@@ -1,18 +1,14 @@
-import Image from "next/image";
+"use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-// import logoPic from "../../../public/logo.ico";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const roleArr = ["User", "Driver", "Admin"];
 const Signup = () => {
   const router = useRouter();
 
   const [errors, setErrors] = useState({});
-
   const [data, setData] = useState({
     username: "",
     email: "",
@@ -23,7 +19,7 @@ const Signup = () => {
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
-      router.push("./");
+      router.push("/");
     }
   }, []);
 
@@ -35,14 +31,12 @@ const Signup = () => {
       [name]: value,
     });
 
-    // Clear error when user starts typing again
     setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = (e) => {
     e.preventDefault();
     let isValid = true;
-
     const newErrors = {};
 
     // Username validation
@@ -50,7 +44,7 @@ const Signup = () => {
       newErrors.username = "Name is required";
       isValid = false;
     } else if (data.username.trim().length < 5) {
-      newErrors.username = "Name is minimum 4 charecter";
+      newErrors.username = "Name is minimum 4 character";
       isValid = false;
     }
 
@@ -72,7 +66,7 @@ const Signup = () => {
       newErrors.password = "Password is required";
       isValid = false;
     } else if (data.password.trim().length < 8) {
-      newErrors.password = "Passsword is minimum 8 charecter";
+      newErrors.password = "Password is minimum 8 character";
       isValid = false;
     }
     // Password validation
@@ -80,9 +74,10 @@ const Signup = () => {
       newErrors.cPassword = "Confirm Password is required";
       isValid = false;
     } else if (data.cPassword.trim() !== data.password) {
-      newErrors.cPassword = "Confirm Password must br same as Password";
+      newErrors.cPassword = "Confirm Password must be same as Password";
       isValid = false;
     }
+
     if (isValid) {
       handleSubmit();
     }
@@ -91,49 +86,47 @@ const Signup = () => {
       setErrors(newErrors);
     }
   };
-  const handleSubmit = async () => {
-    const res = await fetch(`/api/auth/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: data.username,
-        email: data.email,
-        password: data.password,
-        isSubscribe: data.isSubscribe,
-        role: data.role,
-      }),
-    });
 
-    const response = await res.json();
-    if (response.success) {
-      toast.success("Your account has been created successfully!", {
-        position: "bottom-center",
-        autoClose: 1000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
+  const handleSubmit = async () => {
+    try {
+      const res = await fetch(`/api/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.username,
+          email: data.email,
+          password: data.password,
+          isSubscribe: data.isSubscribe,
+          role: "admin", // preserve the role field
+        }),
       });
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 1000);
-    } else {
-      toast.error("User already exist!", {
+
+      const response = await res.json();
+      if (response.success) {
+        toast.success("Your account has been created successfully!", {
+          position: "bottom-center",
+          autoClose: 1000,
+        });
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 1000);
+      } else {
+        toast.error("User already exists!", {
+          position: "bottom-center",
+          autoClose: 1000,
+        });
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      toast.error("Signup failed!", {
         position: "bottom-center",
         autoClose: 1000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
       });
     }
   };
+
   return (
     <>
       <ToastContainer
@@ -151,7 +144,6 @@ const Signup = () => {
 
       <div className="flex min-h-screen justify-center items-center flex-col w-full px-3  mb-5 lg:px-8">
         <div className="sm:mx-auto sm:max-w-sm flex">
-          {/* <Image alt="map" className="h-full" src={logoPic}></Image> */}
           <h2 className="mt-2 text-center text-3xl font-semibold leading-9 tracking-tight text-gray-800">
             Rapid Page Builder
           </h2>
@@ -175,7 +167,6 @@ const Signup = () => {
                   onChange={onChange}
                   name="username"
                   type="text"
-                  autoComplete="username"
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -197,7 +188,6 @@ const Signup = () => {
                   onChange={onChange}
                   name="email"
                   type="text"
-                  autoComplete="email"
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -219,7 +209,6 @@ const Signup = () => {
                   onChange={onChange}
                   name="password"
                   type="password"
-                  autoComplete="password"
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -229,19 +218,18 @@ const Signup = () => {
             </div>
             <div>
               <label
-                htmlFor="cpassword"
+                htmlFor="cPassword"
                 className="block text-sm font-medium leading-6 text-gray-900"
               >
                 Confirm Password <span className="text-red-500">*</span>
               </label>
               <div className="mt-2">
                 <input
-                  id="cpassword"
+                  id="cPassword"
                   value={data.cPassword}
                   onChange={onChange}
                   name="cPassword"
-                  type="cpassword"
-                  autoComplete="password"
+                  type="password"
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -255,7 +243,7 @@ const Signup = () => {
                 id="isSubscribe"
                 name="isSubscribe"
                 type="checkbox"
-                value={data.isSubscribe}
+                checked={data.isSubscribe}
                 onChange={(e) =>
                   setData({ ...data, isSubscribe: e.target.checked })
                 }
@@ -268,7 +256,7 @@ const Signup = () => {
               throughout this website, to manage access to your account, and for
               other purposes described in our{" "}
               <Link
-                href="forgot"
+                href="/forgot"
                 className=" underline text-blue-600 hover:text-blue-500"
               >
                 privacy policy.
@@ -282,9 +270,9 @@ const Signup = () => {
               Register
             </button>
             <div className="mt-4 text-center text-gray-500">
-              Alredy have an account?{" "}
+              Already have an account?{" "}
               <Link
-                href="login"
+                href="/auth/login"
                 className=" underline text-blue-600 hover:text-blue-500"
               >
                 Sign In

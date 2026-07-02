@@ -1,21 +1,39 @@
 import mongoose from "mongoose";
 
-const connectDb = (handler) => async (req, res) => {
-  try {
-    if (mongoose.connections[0].readyState) {
-      return handler(req, res);
-    }
+const MONGO_URI = process.env.MONGO_URI;
 
-    const connection = await mongoose.connect(process.env.MONGO_URI);
-    console.log(connection);
+if (!MONGO_URI) {
+  throw new Error("Please define the MONGO_URI environment variable inside .env.local");
+}
 
-    return handler(req, res);
-  } catch (error) {
-    console.error("Error connecting to database:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Internal server error MONGO" });
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+export async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGO_URI, opts).then((mongooseInstance) => {
+      return mongooseInstance;
+    });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+// For backward compatibility
+const connectDb = (handler) => async (req, res) => {
+  await dbConnect();
+  return handler(req, res);
 };
 
 export default connectDb;
