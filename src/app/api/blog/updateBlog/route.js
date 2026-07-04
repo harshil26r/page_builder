@@ -22,6 +22,10 @@ export async function PUT(request) {
       status,
       publishTime,
       publishDate,
+      blocks,
+      metaTitle,
+      metaDescription,
+      ogImage,
     } = body;
 
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
@@ -59,6 +63,10 @@ export async function PUT(request) {
         modifiedAt: formattedDate,
         publishTime,
         publishDate,
+        blocks,
+        metaTitle,
+        metaDescription,
+        ogImage,
       },
       { new: true }
     );

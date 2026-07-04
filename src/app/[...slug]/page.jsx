@@ -3,6 +3,7 @@ import Blog from "@/models/blog";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import MarkdownRender from "@/components/MarkdownRender";
+import BlockRenderer from "@/components/BlockRenderer";
 import { IoIosArrowBack } from "react-icons/io";
 import { FaRegUser, FaRegEnvelope, FaRegClock } from "react-icons/fa";
 
@@ -16,9 +17,25 @@ export async function generateMetadata({ params }) {
       $or: [{ url: path }, { url: params.slug.join("/") }],
     });
     if (!blog) return {};
+
+    const metaTitle = blog.metaTitle || blog.title;
+    const metaDescription = blog.metaDescription || blog.subText || "Created with Rapid Page Builder";
+    const ogImages = blog.ogImage ? [{ url: blog.ogImage }] : [];
+
     return {
-      title: `${blog.title} | Rapid Page Builder`,
-      description: blog.subText || "Created with Rapid Page Builder",
+      title: `${metaTitle} | Rapid Page Builder`,
+      description: metaDescription,
+      openGraph: {
+        title: metaTitle,
+        description: metaDescription,
+        images: ogImages,
+      },
+      twitter: {
+        card: blog.twitterCard || "summary_large_image",
+        title: metaTitle,
+        description: metaDescription,
+        images: blog.ogImage ? [blog.ogImage] : [],
+      },
     };
   } catch (error) {
     return {
@@ -93,9 +110,13 @@ export default async function CustomPage({ params, searchParams }) {
             )}
           </div>
 
-          {/* Render Body */}
+          {/* Render Body / Blocks */}
           <div className="py-2">
-            <MarkdownRender source={blog.body} />
+            {blog.blocks && blog.blocks.length > 0 ? (
+              <BlockRenderer blocks={blog.blocks} />
+            ) : (
+              <MarkdownRender source={blog.body} />
+            )}
           </div>
 
           {/* Author / Publication Metadata Card */}

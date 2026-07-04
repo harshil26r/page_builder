@@ -7,17 +7,19 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
-export default function MarkdownRender({ source }) {
+export default function MarkdownRender({ source, content }) {
+  const markdownText = source !== undefined ? source : content || "";
+
   return (
     <div className="w-full" data-color-mode="dark">
       <MarkdownPreview
-        source={source}
+        source={markdownText}
         style={{
           backgroundColor: "transparent",
           color: "inherit",
           fontFamily: "inherit",
         }}
-        className="prose prose-invert max-w-none text-gray-300 md:text-lg leading-relaxed"
+        className="prose prose-invert max-w-none text-slate-300 leading-relaxed"
       />
     </div>
   );

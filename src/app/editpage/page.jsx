@@ -2,8 +2,23 @@
 import Sidebar from "@/components/Sidebar";
 import RichTextEditor from "@/components/RichTextEditor";
 import MarkdownRender from "@/components/MarkdownRender";
+import BlockBuilder from "@/components/BlockBuilder";
+import BlockRenderer from "@/components/BlockRenderer";
+import SeoPreview from "@/components/SeoPreview";
 import { IoIosArrowBack } from "react-icons/io";
 import { FiMoreHorizontal } from "react-icons/fi";
+import {
+  HiCog,
+  HiChevronRight,
+  HiChevronLeft,
+  HiSparkles,
+  HiEye,
+  HiPencilAlt,
+  HiDeviceMobile,
+  HiDesktopComputer,
+  HiGlobe,
+  HiCheck,
+} from "react-icons/hi";
 import React, { useState, useEffect, Fragment, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
@@ -27,8 +42,11 @@ function EditPageContent() {
   const [imageList, setImageList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
-  const [viewMode, setViewMode] = useState("split");
+  const [viewMode, setViewMode] = useState("editor");
   const [previewDevice, setPreviewDevice] = useState("desktop");
+  const [contentTab, setContentTab] = useState("blocks");
+  const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const imageListRef = ref(storage, "images/");
 
@@ -42,6 +60,10 @@ function EditPageContent() {
     status: "",
     publishTime: "",
     publishDate: "",
+    blocks: [],
+    metaTitle: "",
+    metaDescription: "",
+    ogImage: "",
   });
 
   const getBlogData = async (blogId) => {
@@ -65,6 +87,10 @@ function EditPageContent() {
           status: response.blog.status || "",
           publishTime: response.blog.publishTime || "",
           publishDate: response.blog.publishDate || "",
+          blocks: response.blog.blocks || [],
+          metaTitle: response.blog.metaTitle || response.blog.title || "",
+          metaDescription: response.blog.metaDescription || response.blog.subText || "",
+          ogImage: response.blog.ogImage || "",
         });
       }
     } catch (err) {
@@ -99,7 +125,7 @@ function EditPageContent() {
       }
     };
     checkAuth();
-  }, [id]);
+  }, [id, router]);
 
   useEffect(() => {
     listAll(imageListRef).then((res) => {
@@ -109,7 +135,7 @@ function EditPageContent() {
         });
       });
     });
-  }, []);
+  }, [imageListRef]);
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -148,7 +174,7 @@ function EditPageContent() {
   };
 
   const validateForm = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     let isValid = true;
     const newErrors = {};
 
@@ -193,6 +219,10 @@ function EditPageContent() {
           attachments: data.attachments,
           url: data.url,
           showAuthor: data.showAuthor,
+          blocks: data.blocks,
+          metaTitle: data.metaTitle,
+          metaDescription: data.metaDescription,
+          ogImage: data.ogImage,
         }),
       });
       const response = await res.json();
@@ -203,7 +233,7 @@ function EditPageContent() {
           autoClose: 1000,
         });
       } else {
-        toast.error("Page already exists!", {
+        toast.error(response.error || "Page already exists!", {
           position: "bottom-center",
           autoClose: 1000,
         });
@@ -222,6 +252,10 @@ function EditPageContent() {
           attachments: data.attachments,
           url: data.url,
           showAuthor: data.showAuthor,
+          blocks: data.blocks,
+          metaTitle: data.metaTitle,
+          metaDescription: data.metaDescription,
+          ogImage: data.ogImage,
         }),
       });
       const response = await res.json();
@@ -232,12 +266,23 @@ function EditPageContent() {
           autoClose: 1000,
         });
       } else {
-        toast.error("Page already exists!", {
+        toast.error(response.error || "Failed to update page!", {
           position: "bottom-center",
           autoClose: 1000,
         });
       }
     }
+  };
+
+  const handleLiveUrlPreview = async () => {
+    if (!data.url.trim()) {
+      toast.error("Please specify a URL slug in configuration first!");
+      return;
+    }
+    toast.info("Saving draft for live preview...", { autoClose: 800 });
+    await saveBlog();
+    const cleanUrl = data.url.startsWith('/') ? data.url : '/' + data.url;
+    window.open(`${cleanUrl}?preview=true`, "_blank");
   };
 
   const addPublishTime = async () => {
@@ -302,10 +347,6 @@ function EditPageContent() {
     }
   };
 
-  function classNames(...classes) {
-    return classes.filter(Boolean).join(" ");
-  }
-
   return (
     <>
       <ToastContainer
@@ -320,33 +361,37 @@ function EditPageContent() {
         pauseOnHover
         theme="dark"
       />
-      <div className="flex bg-gray-950 text-gray-100 min-h-screen">
+
+      <div className="flex bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
         <Sidebar />
-        <div className="flex flex-col w-full h-fit scroll-m-0">
-          
-          {/* Header Action Bar */}
-          <div className="relative z-30 flex flex-col md:flex-row p-6 w-full justify-between items-center border-b border-gray-800 bg-gray-900/10 backdrop-blur-sm gap-4">
-            <div className="flex items-center gap-4">
+
+        <div className="flex flex-col w-full min-h-screen pb-24 md:pb-8">
+          {/* Top Glassmorphic Navigation Bar */}
+          <header className="sticky top-0 z-40 flex flex-wrap p-4 md:px-8 w-full justify-between items-center border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl gap-4">
+            <div className="flex items-center gap-3">
               <button
-                className="flex items-center justify-center h-10 w-10 rounded-xl border border-gray-800 bg-gray-900/40 text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
+                className="flex items-center justify-center h-10 w-10 rounded-2xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-sm"
                 onClick={() => router.push("/")}
               >
                 <IoIosArrowBack className="text-xl" />
               </button>
               <div>
-                <p className="font-bold text-xl text-white">
-                  {id ? "Edit Page" : "Create Page"}
-                </p>
+                <h1 className="font-extrabold text-lg md:text-xl text-white tracking-tight flex items-center gap-2">
+                  <span>{id ? "Edit Builder Page" : "Create Page"}</span>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                    <HiSparkles className="text-indigo-400" /> V2 Studio
+                  </span>
+                </h1>
                 {(id || currentBlogId) && (
                   <span
-                    className={`inline-block text-xs font-bold px-2 py-0.5 mt-1 rounded-full uppercase tracking-wider ${
+                    className={`inline-block text-[10px] font-bold px-2 py-0.5 mt-0.5 rounded-full uppercase tracking-wider ${
                       currentBlog.status === "draft"
-                        ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                        ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
                         : currentBlog.status === "scheduled"
                         ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
                         : currentBlog.status === "published"
                         ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : ""
+                        : "bg-slate-800 text-slate-400"
                     }`}
                   >
                     {currentBlog.status || "draft"}
@@ -355,457 +400,478 @@ function EditPageContent() {
               </div>
             </div>
 
-            <ul className="flex items-center gap-3">
-              <li className="hidden md:block">
-                <div className="flex items-center gap-1 bg-gray-900/80 border border-gray-800 p-0.5 rounded-xl text-xs font-semibold text-gray-400">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("editor")}
-                    className={`px-3 py-1.5 rounded-lg transition duration-150 ${viewMode === "editor" ? "bg-gray-800 text-white shadow-sm font-bold" : "hover:text-white"}`}
-                  >
-                    Editor View
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("split")}
-                    className={`px-3 py-1.5 rounded-lg transition duration-150 ${viewMode === "split" ? "bg-gray-800 text-white shadow-sm font-bold" : "hover:text-white"}`}
-                  >
-                    Split View
-                  </button>
-                </div>
-              </li>
-              <li>
-                <div className="relative z-40">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowActionsDropdown(!showActionsDropdown);
-                    }}
-                    className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/40 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition duration-150"
-                  >
-                    Actions <FiMoreHorizontal size={14} />
-                  </button>
-                  {showActionsDropdown && (
-                    <div className="absolute right-0 mt-2 w-36 rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl z-50">
-                      <a
-                        href={data.url ? (data.url.startsWith('/') ? data.url : '/' + data.url) + "?preview=true" : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-left px-4 py-2 text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition duration-150"
-                      >
-                        Preview
-                      </a>
-                      {(id || currentBlogId) && (
-                        <button
-                          onClick={handleDeleteBlog}
-                          className="block w-full text-left px-4 py-2 text-xs font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition duration-150"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </li>
-              <li>
-                <button
-                  onClick={() => router.push("/")}
-                  className="h-10 px-4 rounded-xl border border-gray-800 bg-gray-900/20 text-sm font-semibold text-gray-400 hover:text-white hover:bg-gray-800/40 transition duration-150"
-                >
-                  Cancel
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={validateForm}
-                  className="h-10 px-5 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-md hover:bg-indigo-500 transition duration-150"
-                >
-                  Save Draft
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setOpen(true)}
-                  className="h-10 px-5 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-md hover:bg-emerald-500 transition duration-150"
-                >
-                  Publish
-                </button>
-              </li>
-            </ul>
+            {/* Viewport & Action Buttons */}
+            <div className="flex items-center gap-2.5">
+              {/* Quick Modal Preview Button */}
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(true)}
+                className="h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5"
+              >
+                👁️ Quick Preview
+              </button>
 
-            {/* Publish Scheduler Modal */}
-            <Transition.Root show={open} as={Fragment}>
-              <Dialog as="div" className="relative z-30" onClose={setOpen}>
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-300"
-                  enterFrom="opacity-0"
-                  enterTo="opacity-100"
-                  leave="ease-in duration-200"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
+              {/* Actions Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowActionsDropdown(!showActionsDropdown);
+                  }}
+                  className="flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/60 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
                 >
-                  <div className="fixed inset-0 bg-gray-950/80 transition-opacity" />
-                </Transition.Child>
-
-                <div className="fixed inset-0 z-10 overflow-y-auto">
-                  <div className="flex min-h-full items-center justify-center p-4 text-center">
-                    <Transition.Child
-                      as={Fragment}
-                      enter="ease-out duration-300"
-                      enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                      enterTo="opacity-100 translate-y-0 sm:scale-100"
-                      leave="ease-in duration-200"
-                      leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                      leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                  Actions <FiMoreHorizontal size={14} />
+                </button>
+                {showActionsDropdown && (
+                  <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-slate-900 border border-slate-800 py-2 shadow-2xl z-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowActionsDropdown(false);
+                        handleLiveUrlPreview();
+                      }}
+                      className="block w-full text-left px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
                     >
-                      <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-800 text-left shadow-2xl transition-all w-full max-w-md">
-                        <div className="bg-gray-950 px-6 py-4 flex items-center justify-between border-b border-gray-800">
-                          <Dialog.Title as="h3" className="text-lg font-bold text-white">
-                            Publish Settings
-                          </Dialog.Title>
-                          <button
-                            type="button"
-                            onClick={() => setOpen(false)}
-                            className="text-gray-400 hover:text-white"
-                          >
-                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                          </button>
-                        </div>
-
-                        <div className="p-6 space-y-5">
-                          <div>
-                            <label
-                              htmlFor="publishTime"
-                              className="block text-sm font-semibold text-gray-400"
-                            >
-                              Publish Date <span className="text-red-400">*</span>
-                            </label>
-                            <div className="mt-2">
-                              <input
-                                id="publishTime"
-                                name="publishTime"
-                                type="date"
-                                value={data.publishTime}
-                                onChange={onChange}
-                                required
-                                className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="publishDate"
-                              className="block text-sm font-semibold text-gray-400"
-                            >
-                              Publish Time <span className="text-red-400">*</span>
-                            </label>
-                            <div className="mt-2">
-                              <input
-                                id="publishDate"
-                                name="publishDate"
-                                type="time"
-                                value={data.publishDate}
-                                onChange={onChange}
-                                required
-                                className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-gray-950/40 px-6 py-4 flex justify-end gap-3 border-t border-gray-800">
-                          <button
-                            onClick={() => setOpen(false)}
-                            className="h-10 px-4 rounded-xl border border-gray-800 text-sm font-semibold text-gray-400 hover:text-white transition"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={addPublishTime}
-                            className="h-10 px-5 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-md hover:bg-emerald-500 transition"
-                          >
-                            Schedule Publish
-                          </button>
-                        </div>
-                      </Dialog.Panel>
-                    </Transition.Child>
+                      🔗 Live URL Preview
+                    </button>
+                    {(id || currentBlogId) && (
+                      <button
+                        onClick={handleDeleteBlog}
+                        className="block w-full text-left px-4 py-2 text-xs font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition"
+                      >
+                        🗑️ Delete Page
+                      </button>
+                    )}
                   </div>
-                </div>
-              </Dialog>
-            </Transition.Root>
-          </div>
+                )}
+              </div>
 
-          {/* Builder / Configuration Sections */}
-          <div className="flex flex-col xl:flex-row gap-6 p-8 items-start">
-            {/* Editor Workspace */}
-            <div className={`flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 md:p-8 space-y-6 w-full ${viewMode === "split" ? "xl:max-w-[45%]" : ""}`}>
-              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+              <button
+                onClick={validateForm}
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
+              >
+                <HiCheck className="text-sm" /> Save Draft
+              </button>
+
+              <button
+                onClick={() => setOpen(true)}
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
+              >
+                🚀 Publish
+              </button>
+            </div>
+          </header>
+
+          {/* Main Builder Grid */}
+          <div className="flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 items-start">
+            {/* Left: Interactive Content Workspace */}
+            <div className="flex-1 bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-5 sm:p-7 space-y-6 w-full">
+              {/* Primary Form Fields */}
+              <div className="space-y-4">
                 <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-semibold text-gray-400"
-                  >
+                  <label htmlFor="title" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                     Page Title <span className="text-red-400">*</span>
                   </label>
-                  <div className="mt-2">
-                    <input
-                      id="title"
-                      name="title"
-                      type="text"
-                      value={data.title}
-                      onChange={onChange}
-                      placeholder="My Awesome Landing Page"
-                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                    />
-                  </div>
-                  {errors.title && (
-                    <span className="text-red-400 text-xs mt-1 block">{errors.title}</span>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="subText"
-                    className="block text-sm font-semibold text-gray-400"
-                  >
-                    Sub Text
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="subText"
-                      name="subText"
-                      type="text"
-                      value={data.subText}
-                      onChange={onChange}
-                      placeholder="A short subtitle for SEO description"
-                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                    />
-                  </div>
-                  {errors.subText && (
-                    <span className="text-red-400 text-xs mt-1 block">{errors.subText}</span>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="body"
-                    className="block text-sm font-semibold text-gray-400 mb-2"
-                  >
-                    Body Content (Markdown / HTML / SVGs)
-                  </label>
-                  <RichTextEditor
-                    value={data.body}
-                    onChange={(val) => setData({ ...data, body: val || "" })}
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    value={data.title}
+                    onChange={onChange}
+                    placeholder="e.g. Modern AI Landing Page"
+                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/80 py-3 px-4 text-sm font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
                   />
+                  {errors.title && <span className="text-red-400 text-xs mt-1 block">{errors.title}</span>}
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="attachments"
-                    className="block text-sm font-semibold text-gray-400"
-                  >
-                    Featured Media Attachment
+                  <label htmlFor="subText" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Subtitle / Summary
                   </label>
-                  <div className="mt-2 flex flex-col md:flex-row items-stretch md:items-center gap-3">
-                    <input
-                      id="attachments"
-                      name="attachments"
-                      type="file"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setImageUpload(e.target.files[0]);
-                        }
-                      }}
-                      className="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-gray-300 file:hover:bg-gray-700 transition cursor-pointer"
-                    />
+                  <input
+                    id="subText"
+                    name="subText"
+                    type="text"
+                    value={data.subText}
+                    onChange={onChange}
+                    placeholder="Short catchphrase or introductory tagline"
+                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/80 py-2.5 px-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"
+                  />
+                  {errors.subText && <span className="text-red-400 text-xs mt-1 block">{errors.subText}</span>}
+                </div>
+              </div>
+
+              {/* Content Studio Workspace */}
+              <div className="border-t border-slate-800/80 pt-6">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-5 gap-2 overflow-x-auto">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 shrink-0">
+                    <HiPencilAlt className="text-indigo-400 text-sm" /> Content Studio
+                  </span>
+                  <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl text-xs font-semibold shrink-0">
                     <button
                       type="button"
-                      disabled={uploading || !imageUpload}
-                      onClick={uploadImage}
-                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() => setContentTab("blocks")}
+                      className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                        contentTab === "blocks"
+                          ? "bg-indigo-600 text-white shadow-md font-bold"
+                          : "text-slate-400 hover:text-white"
+                      }`}
                     >
-                      {uploading ? "Uploading..." : "Upload Media"}
+                      🧱 Visual Blocks ({data.blocks ? data.blocks.length : 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContentTab("seo")}
+                      className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                        contentTab === "seo"
+                          ? "bg-indigo-600 text-white shadow-md font-bold"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      🎯 SEO & Metadata
                     </button>
                   </div>
-                  <p className="text-gray-500 text-xs mt-1">
-                    Supported media: JPEG, PNG, DOC, XLS, PPT.
-                  </p>
-
-                  {imageList.length > 0 && (
-                    <div className="mt-4 border border-gray-800 bg-gray-950/40 p-4 rounded-xl max-w-sm">
-                      <p className="text-xs text-gray-500 mb-2">Uploaded Preview:</p>
-                      {imageList.map((url, index) => (
-                        <img
-                          src={url}
-                          key={index}
-                          className="rounded-lg max-h-48 w-auto border border-gray-800 object-cover"
-                          alt="Uploaded Attachment"
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </form>
+
+                {contentTab === "blocks" ? (
+                  <BlockBuilder
+                    blocks={data.blocks || []}
+                    onChange={(newBlocks) => setData({ ...data, blocks: newBlocks })}
+                  />
+                ) : (
+                  <SeoPreview
+                    title={data.title}
+                    subText={data.subText}
+                    url={data.url}
+                    metaTitle={data.metaTitle}
+                    metaDescription={data.metaDescription}
+                    ogImage={data.ogImage}
+                    onChange={(field, val) => setData((prev) => ({ ...prev, [field]: val }))}
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Live Preview Panel */}
-            {viewMode === "split" && (
-              <div className="flex-1 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 flex flex-col min-w-0 w-full xl:max-w-[40%] sticky top-24 self-start">
-                <div className="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Live Preview
-                  </h3>
-                  <div className="flex items-center gap-1 bg-gray-900/85 border border-gray-800 p-0.5 rounded-lg text-xs font-semibold text-gray-400">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewDevice("desktop")}
-                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "desktop" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
-                    >
-                      Desktop
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewDevice("tablet")}
-                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "tablet" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
-                    >
-                      Tablet
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewDevice("mobile")}
-                      className={`px-2.5 py-1 rounded-md transition duration-150 ${previewDevice === "mobile" ? "bg-indigo-600 text-white shadow-sm font-bold" : "hover:text-white"}`}
-                    >
-                      Mobile
-                    </button>
-                  </div>
-                </div>
-
-                {/* Device Preview Screen Frame */}
-                <div className="flex-1 overflow-auto bg-gray-950/50 rounded-xl border border-gray-800/60 p-4 flex justify-center items-start min-h-[450px]">
-                  <div 
-                    className={`bg-gray-950 border border-gray-850 rounded-xl shadow-2xl overflow-y-auto transition-all duration-300 ${
-                      previewDevice === "mobile" ? "w-[320px] h-[568px]" :
-                      previewDevice === "tablet" ? "w-[500px] h-[650px]" :
-                      "w-full h-full"
-                    }`}
-                  >
-                    {/* Mock Browser Header */}
-                    <div className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center gap-2 text-xs text-gray-500 rounded-t-xl select-none">
-                      <div className="flex gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-red-500/60"></span>
-                        <span className="w-2 h-2 rounded-full bg-yellow-500/60"></span>
-                        <span className="w-2 h-2 rounded-full bg-green-500/60"></span>
-                      </div>
-                      <div className="bg-gray-950/80 border border-gray-855 px-3 py-0.5 rounded-md text-gray-400 font-mono text-[9px] flex-1 max-w-[200px] mx-auto truncate text-center">
-                        {data.url ? `/${data.url}` : "/new-page"}
-                      </div>
-                    </div>
-                    
-                    {/* Rendered content */}
-                    <div className="p-6 font-sans">
-                      <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-2 leading-tight">
-                        {data.title || "Untitled Page"}
-                      </h1>
-                      {data.subText && (
-                        <p className="text-gray-400 font-medium text-xs mb-4 leading-relaxed">
-                          {data.subText}
-                        </p>
-                      )}
-                      <div className="border-t border-gray-800/80 pt-4">
-                        <MarkdownRender source={data.body} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Sidebar Configuration Panel */}
-            <div className="w-full xl:w-80 bg-gray-900/30 border border-gray-800/85 backdrop-blur-md rounded-2xl p-6 space-y-6">
-              <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-3">
-                Configuration
-              </h3>
-
-              <div className="space-y-5">
-                <div>
-                  <label
-                    htmlFor="url"
-                    className="block text-sm font-semibold text-gray-400"
-                  >
-                    Path URL <span className="text-red-400">*</span>
-                  </label>
-                  <div className="mt-2 relative rounded-xl shadow-sm">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-500 text-sm pointer-events-none">
-                      /
-                    </span>
-                    <input
-                      id="url"
-                      name="url"
-                      type="text"
-                      value={data.url}
-                      onChange={onChange}
-                      placeholder="about-us"
-                      required
-                      className="block w-full pl-7 rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                    />
+            <div
+              className={`transition-all duration-300 bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl ${
+                isConfigCollapsed ? "w-full xl:w-16 p-3 flex flex-col items-center" : "w-full xl:w-80 p-6 space-y-6"
+              }`}
+            >
+              {isConfigCollapsed ? (
+                <button
+                  type="button"
+                  onClick={() => setIsConfigCollapsed(false)}
+                  className="flex flex-col items-center gap-2 text-slate-400 hover:text-white py-2 w-full group"
+                  title="Expand Configuration"
+                >
+                  <HiCog className="text-xl text-indigo-400 group-hover:rotate-45 transition-transform" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider hidden xl:block text-slate-500 group-hover:text-slate-300">
+                    Config
+                  </span>
+                  <HiChevronLeft className="text-sm mt-1" />
+                </button>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                      <HiCog className="text-indigo-400 text-base" /> Configuration
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsConfigCollapsed(true)}
+                      className="p-1 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                      title="Collapse Configuration"
+                    >
+                      <HiChevronRight className="text-base" />
+                    </button>
                   </div>
-                  {errors.url && (
-                    <span className="text-red-400 text-xs mt-1 block">{errors.url}</span>
-                  )}
-                </div>
 
-                <div>
-                  <label
-                    htmlFor="author"
-                    className="block text-sm font-semibold text-gray-400"
-                  >
-                    Author
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="author"
-                      name="author"
-                      type="text"
-                      value={user}
-                      readOnly
-                      className="block w-full rounded-xl border border-gray-800 bg-gray-950 py-2.5 px-3.5 text-gray-500 sm:text-sm sm:leading-6 cursor-not-allowed select-none font-medium"
-                    />
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label htmlFor="url" className="block text-slate-400 font-semibold mb-1">
+                        URL Slug <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative rounded-xl shadow-sm">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-mono">
+                          /
+                        </span>
+                        <input
+                          id="url"
+                          name="url"
+                          type="text"
+                          value={data.url}
+                          onChange={onChange}
+                          placeholder="landing-page"
+                          required
+                          className="block w-full pl-7 rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 text-slate-200 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      {errors.url && <span className="text-red-400 text-xs mt-1 block">{errors.url}</span>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="author" className="block text-slate-400 font-semibold mb-1">
+                        Author
+                      </label>
+                      <input
+                        id="author"
+                        name="author"
+                        type="text"
+                        value={user}
+                        readOnly
+                        className="block w-full rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 text-slate-500 cursor-not-allowed select-none font-medium"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <input
+                        id="showAuthor"
+                        name="showAuthor"
+                        type="checkbox"
+                        checked={data.showAuthor}
+                        onChange={(e) => setData({ ...data, showAuthor: e.target.checked })}
+                        className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-indigo-500"
+                      />
+                      <label htmlFor="showAuthor" className="text-slate-300 font-semibold cursor-pointer">
+                        Display Author Badge
+                      </label>
+                    </div>
+
+                    {/* Active Page Sections Overview */}
+                    <div className="pt-4 border-t border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-slate-300 font-bold flex items-center gap-1.5">
+                          <HiSparkles className="text-indigo-400" /> Active Sections ({data.blocks ? data.blocks.length : 0})
+                        </label>
+                      </div>
+
+                      {(!data.blocks || data.blocks.length === 0) ? (
+                        <p className="text-[11px] text-slate-500 italic">No section blocks added yet.</p>
+                      ) : (
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                          {data.blocks.map((b, i) => (
+                            <div
+                              key={b.id || i}
+                              className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-slate-800 text-[11px]"
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="font-mono text-[9px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                  #{i + 1}
+                                </span>
+                                <span className="font-semibold text-slate-200 uppercase truncate">
+                                  {b.type}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 truncate max-w-[90px]">
+                                {b.data?.title || b.data?.headline || "Block"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-3">
-                  <input
-                    id="showAuthor"
-                    name="showAuthor"
-                    type="checkbox"
-                    checked={data.showAuthor}
-                    onChange={(e) =>
-                      setData({ ...data, showAuthor: e.target.checked })
-                    }
-                    className="w-4.5 h-4.5 rounded border-gray-800 bg-gray-950 text-indigo-500 focus:ring-indigo-500/50"
-                  />
-                  <label
-                    htmlFor="showAuthor"
-                    className="text-sm font-semibold text-gray-400 hover:text-gray-300 cursor-pointer select-none"
-                  >
-                    Show Author Profile
-                  </label>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Schedule Publish Modal */}
+      <Transition.Root show={open} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={setOpen}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl transition-all w-full max-w-md">
+                  <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800">
+                    <Dialog.Title as="h3" className="text-base font-bold text-white">
+                      Publish & Schedule Page
+                    </Dialog.Title>
+                    <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
+                      <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-4 text-xs">
+                    <div>
+                      <label htmlFor="publishTime" className="block font-semibold text-slate-300 mb-1">
+                        Publish Date
+                      </label>
+                      <input
+                        id="publishTime"
+                        name="publishTime"
+                        type="date"
+                        value={data.publishTime}
+                        onChange={onChange}
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="publishDate" className="block font-semibold text-slate-300 mb-1">
+                        Publish Time
+                      </label>
+                      <input
+                        id="publishDate"
+                        name="publishDate"
+                        type="time"
+                        value={data.publishDate}
+                        onChange={onChange}
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-950 px-6 py-4 flex justify-end gap-3 border-t border-slate-800">
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="px-4 py-2 rounded-xl border border-slate-800 text-xs font-semibold text-slate-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={addPublishTime}
+                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-lg"
+                    >
+                      Schedule Publish
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      {/* Quick Live Preview Modal (Modal-based preview, zero screen clutter!) */}
+      <Transition.Root show={showPreviewModal} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={setShowPreviewModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl transition-all w-full max-w-4xl max-h-[90vh] flex flex-col">
+                  <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <Dialog.Title as="h3" className="text-base font-bold text-white flex items-center gap-2">
+                        <span>👁️ Live Screen Preview</span>
+                      </Dialog.Title>
+                      <div className="flex bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDevice("desktop")}
+                          className={`px-2.5 py-1 rounded-md transition ${previewDevice === "desktop" ? "bg-indigo-600 text-white font-bold" : "text-slate-400"}`}
+                        >
+                          Desktop
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDevice("mobile")}
+                          className={`px-2.5 py-1 rounded-md transition ${previewDevice === "mobile" ? "bg-indigo-600 text-white font-bold" : "text-slate-400"}`}
+                        >
+                          Mobile
+                        </button>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setShowPreviewModal(false)} className="text-slate-400 hover:text-white">
+                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <div className="p-3 sm:p-6 overflow-y-auto bg-slate-950/80 flex justify-center items-start flex-1 min-h-[500px]">
+                    <div
+                      className={`bg-slate-950 border transition-all duration-300 shadow-2xl overflow-y-auto ${
+                        previewDevice === "mobile"
+                          ? "w-[375px] max-w-full rounded-[36px] border-[6px] border-slate-800 ring-1 ring-slate-700 my-2 min-h-[620px] max-h-[75vh]"
+                          : "w-full rounded-2xl border-slate-800 min-h-[500px]"
+                      }`}
+                    >
+                      {/* Realistic Mobile Device Top Bar */}
+                      {previewDevice === "mobile" && (
+                        <div className="bg-slate-900/90 border-b border-slate-800 px-5 py-2.5 flex items-center justify-between text-[11px] text-slate-400 select-none sticky top-0 z-20 backdrop-blur-md">
+                          <span className="font-semibold text-slate-200">9:41</span>
+                          <div className="w-16 h-3 bg-slate-950 rounded-full border border-slate-800 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-slate-800" />
+                          </div>
+                          <div className="flex items-center gap-1.5 font-bold text-[10px]">
+                            <span>5G</span>
+                            <div className="w-4 h-2.5 border border-slate-300 rounded-sm p-0.5 flex items-center">
+                              <div className="w-full h-full bg-slate-200" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`${previewDevice === "mobile" ? "p-3 sm:p-4" : "p-6"} font-sans space-y-4`}>
+                        <h2 className={`font-extrabold text-white ${previewDevice === "mobile" ? "text-xl" : "text-2xl"}`}>
+                          {data.title || "Untitled Page"}
+                        </h2>
+                        {data.subText && <p className="text-xs text-slate-400">{data.subText}</p>}
+                        <div className="border-t border-slate-800 pt-4">
+                          {data.blocks && data.blocks.length > 0 ? (
+                            <BlockRenderer blocks={data.blocks} />
+                          ) : (
+                            <MarkdownRender source={data.body} />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
     </>
   );
 }
 
 export default function EditPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-400 font-sans">Loading page builder...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-sans">Loading Page Studio...</div>}>
       <EditPageContent />
     </Suspense>
   );

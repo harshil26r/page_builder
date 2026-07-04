@@ -11,7 +11,7 @@ export async function POST(request) {
   try {
     await dbConnect();
     const bodyData = await request.json();
-    const { title, subText, body, attachments, url, showAuthor } = bodyData;
+    const { title, subText, body, attachments, url, showAuthor, blocks, metaTitle, metaDescription, ogImage } = bodyData;
 
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
@@ -53,6 +53,10 @@ export async function POST(request) {
       modifiedAt: formattedDate,
       status: bodyData.status || "draft",
       publishTime: bodyData.publishTime || "",
+      blocks: blocks || [],
+      metaTitle: metaTitle || title,
+      metaDescription: metaDescription || subText,
+      ogImage: ogImage || "",
     });
 
     await newBlog.save();

@@ -14,6 +14,11 @@ const BlogSchema = new Schema(
     status: { type: String, required: false, default: "draft" },
     publishTime: { type: String, required: false },
     publishDate: { type: String, required: false },
+    blocks: { type: Array, required: false, default: [] },
+    metaTitle: { type: String, required: false },
+    metaDescription: { type: String, required: false },
+    ogImage: { type: String, required: false },
+    twitterCard: { type: String, required: false, default: "summary_large_image" },
   },
   { timestamps: true }
 );
