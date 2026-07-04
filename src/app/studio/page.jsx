@@ -330,35 +330,47 @@ function StudioContent() {
 
         <div className="flex flex-col w-full min-h-screen pb-24 md:pb-8">
           {/* Top Glassmorphic Navigation Bar */}
-          <header className="sticky top-0 z-40 flex flex-wrap p-4 md:px-8 w-full justify-between items-center border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl gap-4">
+          <header className="sticky top-0 z-40 flex flex-wrap p-4 md:px-8 w-full justify-between items-center border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-2xl gap-4 shadow-sm">
             <div className="flex items-center gap-3">
               <button
-                className="flex items-center justify-center h-10 w-10 rounded-2xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                className="flex items-center justify-center h-10 w-10 rounded-2xl border border-slate-800 bg-slate-900/70 text-slate-400 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-transform shadow-sm"
                 onClick={() => router.push("/")}
+                title="Back to Dashboard"
               >
                 <IoIosArrowBack className="text-xl" />
               </button>
-              <div>
-                <h1 className="font-extrabold text-lg md:text-xl text-white tracking-tight flex items-center gap-2">
+              <div className="ms-1 py-0.5">
+                <h1 className="font-extrabold text-lg md:text-xl text-white tracking-tight flex items-center gap-2.5">
                   <span>{id || currentBlogId ? "Studio Page Editor" : "New Page Studio"}</span>
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-indigo-300 bg-indigo-500/15 px-2.5 py-0.5 rounded-full border border-indigo-500/30 shadow-inner">
                     <HiSparkles className="text-indigo-400" /> Content Studio
                   </span>
                 </h1>
                 {(id || currentBlogId) && (
-                  <span
-                    className={`inline-block text-[10px] font-bold px-2 py-0.5 mt-0.5 rounded-full uppercase tracking-wider ${
-                      currentBlog.status === "draft"
-                        ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                        : currentBlog.status === "scheduled"
-                        ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                        : currentBlog.status === "published"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-slate-800 text-slate-400"
-                    }`}
-                  >
-                    {currentBlog.status || "draft"}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                        currentBlog.status === "draft"
+                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          : currentBlog.status === "scheduled"
+                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                          : currentBlog.status === "published"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : "bg-slate-800 text-slate-400 border border-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          currentBlog.status === "published"
+                            ? "bg-emerald-400 animate-pulse"
+                            : currentBlog.status === "scheduled"
+                            ? "bg-indigo-400"
+                            : "bg-amber-400"
+                        }`}
+                      />
+                      {currentBlog.status || "draft"}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -369,9 +381,9 @@ function StudioContent() {
               <button
                 type="button"
                 onClick={() => setShowPreviewModal(true)}
-                className="h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center gap-1.5"
+                className="h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/70 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white active:scale-[0.96] transition-all flex items-center gap-1.5 shadow-sm"
               >
-                👁️ Quick Preview
+                <span>👁️</span> Quick Preview
               </button>
 
               {/* Actions Dropdown */}
@@ -381,26 +393,26 @@ function StudioContent() {
                     e.stopPropagation();
                     setShowActionsDropdown(!showActionsDropdown);
                   }}
-                  className="flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/60 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                  className="flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/70 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-all shadow-sm"
                 >
                   Actions <FiMoreHorizontal size={14} />
                 </button>
                 {showActionsDropdown && (
-                  <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-slate-900 border border-slate-800 py-2 shadow-2xl z-50">
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-slate-900 border border-slate-800 py-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
                     <button
                       type="button"
                       onClick={() => {
                         setShowActionsDropdown(false);
                         handleLiveUrlPreview();
                       }}
-                      className="block w-full text-left px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                      className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
                     >
                       🔗 Live URL Preview
                     </button>
                     {(id || currentBlogId) && (
                       <button
                         onClick={handleDeleteBlog}
-                        className="block w-full text-left px-4 py-2 text-xs font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition"
+                        className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-red-400/90 hover:bg-red-500/10 hover:text-red-400 transition-colors border-t border-slate-800/60 mt-1"
                       >
                         🗑️ Delete Page
                       </button>
@@ -411,14 +423,14 @@ function StudioContent() {
 
               <button
                 onClick={validateForm}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-xs font-extrabold text-white shadow-lg shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
               >
                 <HiCheck className="text-sm" /> Save Draft
               </button>
 
               <button
                 onClick={() => setOpen(true)}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/20 active:scale-[0.96] transition-all flex items-center gap-1.5"
               >
                 🚀 Publish
               </button>
@@ -428,12 +440,13 @@ function StudioContent() {
           {/* Main Builder Grid */}
           <div className="flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 items-start">
             {/* Left: Interactive Content Workspace */}
-            <div className="flex-1 bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-5 sm:p-7 space-y-6 w-full">
+            <div className="flex-1 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 space-y-7 shadow-xl w-full">
               {/* Primary Form Fields */}
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="title" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Page Title <span className="text-red-400">*</span>
+              <div className="space-y-6">
+                <div className="p-1">
+                  <label htmlFor="title" className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
+                    <span>Page Title <span className="text-red-400">*</span></span>
+                    <span className="text-[10px] font-medium text-slate-500">Main Heading</span>
                   </label>
                   <input
                     id="title"
@@ -442,13 +455,13 @@ function StudioContent() {
                     value={data.title}
                     onChange={onChange}
                     placeholder="e.g. Modern AI Landing Page"
-                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/80 py-3 px-4 text-sm font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/90 py-4 px-5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
                   />
-                  {errors.title && <span className="text-red-400 text-xs mt-1 block">{errors.title}</span>}
+                  {errors.title && <span className="text-red-400 text-xs mt-2 font-medium block">{errors.title}</span>}
                 </div>
 
-                <div>
-                  <label htmlFor="subText" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                <div className="p-1">
+                  <label htmlFor="subText" className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">
                     Subtitle / Summary
                   </label>
                   <input
@@ -458,25 +471,25 @@ function StudioContent() {
                     value={data.subText}
                     onChange={onChange}
                     placeholder="Short catchphrase or introductory tagline"
-                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/80 py-2.5 px-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"
+                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/90 py-3.5 px-5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
                   />
-                  {errors.subText && <span className="text-red-400 text-xs mt-1 block">{errors.subText}</span>}
+                  {errors.subText && <span className="text-red-400 text-xs mt-2 font-medium block">{errors.subText}</span>}
                 </div>
               </div>
 
               {/* Content Studio Workspace */}
               <div className="border-t border-slate-800/80 pt-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-5 gap-2 overflow-x-auto">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 shrink-0">
-                    <HiPencilAlt className="text-indigo-400 text-sm" /> Content Studio
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3.5 mb-6 gap-2 overflow-x-auto">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2 shrink-0">
+                    <HiPencilAlt className="text-indigo-400 text-base" /> Content Studio
                   </span>
-                  <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl text-xs font-semibold shrink-0">
+                  <div className="flex bg-slate-950/90 border border-slate-800/90 p-1 rounded-2xl text-xs font-semibold shrink-0 shadow-inner">
                     <button
                       type="button"
                       onClick={() => setContentTab("blocks")}
-                      className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                      className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
                         contentTab === "blocks"
-                          ? "bg-indigo-600 text-white shadow-md font-bold"
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -485,9 +498,9 @@ function StudioContent() {
                     <button
                       type="button"
                       onClick={() => setContentTab("seo")}
-                      className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                      className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
                         contentTab === "seo"
-                          ? "bg-indigo-600 text-white shadow-md font-bold"
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -517,7 +530,7 @@ function StudioContent() {
 
             {/* Sidebar Configuration Panel */}
             <div
-              className={`transition-all duration-300 bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl ${
+              className={`transition-all duration-300 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-xl ${
                 isConfigCollapsed ? "w-full xl:w-16 p-3 flex flex-col items-center" : "w-full xl:w-80 p-6 space-y-6"
               }`}
             >
@@ -525,7 +538,7 @@ function StudioContent() {
                 <button
                   type="button"
                   onClick={() => setIsConfigCollapsed(false)}
-                  className="flex flex-col items-center gap-2 text-slate-400 hover:text-white py-2 w-full group"
+                  className="flex flex-col items-center gap-2 text-slate-400 hover:text-white py-2 w-full group active:scale-[0.96] transition-all"
                   title="Expand Configuration"
                 >
                   <HiCog className="text-xl text-indigo-400 group-hover:rotate-45 transition-transform" />
@@ -536,14 +549,14 @@ function StudioContent() {
                 </button>
               ) : (
                 <>
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
+                    <h3 className="text-sm font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
                       <HiCog className="text-indigo-400 text-base" /> Configuration
                     </h3>
                     <button
                       type="button"
                       onClick={() => setIsConfigCollapsed(true)}
-                      className="p-1 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                      className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white active:scale-[0.96] transition-all"
                       title="Collapse Configuration"
                     >
                       <HiChevronRight className="text-base" />
@@ -552,11 +565,11 @@ function StudioContent() {
 
                   <div className="space-y-4 text-xs">
                     <div>
-                      <label htmlFor="url" className="block text-slate-400 font-semibold mb-1">
+                      <label htmlFor="url" className="block text-slate-400 font-bold mb-1.5">
                         URL Slug <span className="text-red-400">*</span>
                       </label>
                       <div className="relative rounded-xl shadow-sm">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-mono">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-mono select-none">
                           /
                         </span>
                         <input
@@ -567,14 +580,14 @@ function StudioContent() {
                           onChange={onChange}
                           placeholder="landing-page"
                           required
-                          className="block w-full pl-7 rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 text-slate-200 focus:border-indigo-500 outline-none"
+                          className="block w-full pl-7 rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-slate-200 font-mono text-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition-all"
                         />
                       </div>
-                      {errors.url && <span className="text-red-400 text-xs mt-1 block">{errors.url}</span>}
+                      {errors.url && <span className="text-red-400 text-xs mt-1 block font-medium">{errors.url}</span>}
                     </div>
 
                     <div>
-                      <label htmlFor="author" className="block text-slate-400 font-semibold mb-1">
+                      <label htmlFor="author" className="block text-slate-400 font-bold mb-1.5">
                         Author
                       </label>
                       <input
@@ -583,7 +596,7 @@ function StudioContent() {
                         type="text"
                         value={user}
                         readOnly
-                        className="block w-full rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 text-slate-500 cursor-not-allowed select-none font-medium"
+                        className="block w-full rounded-xl border border-slate-800/80 bg-slate-950/70 py-2.5 px-3 text-slate-500 cursor-not-allowed select-none font-medium"
                       />
                     </div>
 
@@ -594,17 +607,17 @@ function StudioContent() {
                         type="checkbox"
                         checked={data.showAuthor}
                         onChange={(e) => setData({ ...data, showAuthor: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-indigo-500"
+                        className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-950 cursor-pointer"
                       />
-                      <label htmlFor="showAuthor" className="text-slate-300 font-semibold cursor-pointer">
+                      <label htmlFor="showAuthor" className="text-slate-300 font-semibold cursor-pointer select-none">
                         Display Author Badge
                       </label>
                     </div>
 
                     {/* Active Page Sections Overview */}
-                    <div className="pt-4 border-t border-slate-800 space-y-2">
+                    <div className="pt-4 border-t border-slate-800 space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <label className="block text-slate-300 font-bold flex items-center gap-1.5">
+                        <label className="block text-slate-300 font-extrabold flex items-center gap-1.5">
                           <HiSparkles className="text-indigo-400" /> Active Sections ({data.blocks ? data.blocks.length : 0})
                         </label>
                       </div>
@@ -612,21 +625,21 @@ function StudioContent() {
                       {!data.blocks || data.blocks.length === 0 ? (
                         <p className="text-[11px] text-slate-500 italic">No section blocks added yet.</p>
                       ) : (
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                           {data.blocks.map((b, i) => (
                             <div
                               key={b.id || i}
-                              className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-slate-800 text-[11px]"
+                              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] hover:border-indigo-500/30 hover:bg-slate-900/90 transition-all shadow-sm"
                             >
                               <div className="flex items-center gap-2 truncate">
-                                <span className="font-mono text-[9px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                <span className="font-mono text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-1.5 py-0.5 rounded-md border border-indigo-500/25">
                                   #{i + 1}
                                 </span>
-                                <span className="font-semibold text-slate-200 uppercase truncate">
+                                <span className="font-bold text-slate-200 uppercase truncate">
                                   {b.type}
                                 </span>
                               </div>
-                              <span className="text-[10px] text-slate-500 truncate max-w-[90px]">
+                              <span className="text-[10px] font-medium text-slate-400 truncate max-w-[100px]">
                                 {b.data?.title || b.data?.headline || "Block"}
                               </span>
                             </div>
@@ -662,13 +675,13 @@ function StudioContent() {
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                enterFrom="opacity-0 scale-95 translate-y-2"
+                enterTo="opacity-100 scale-100 translate-y-0"
                 leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                leaveFrom="opacity-100 scale-100 translate-y-0"
+                leaveTo="opacity-0 scale-95 translate-y-2"
               >
-                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl transition-all w-full max-w-md">
+                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl w-full max-w-md">
                   <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800">
                     <Dialog.Title as="h3" className="text-base font-bold text-white">
                       Publish & Schedule Page
@@ -749,62 +762,68 @@ function StudioContent() {
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                enterFrom="opacity-0 scale-95 translate-y-2"
+                enterTo="opacity-100 scale-100 translate-y-0"
                 leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                leaveFrom="opacity-100 scale-100 translate-y-0"
+                leaveTo="opacity-0 scale-95 translate-y-2"
               >
-                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl transition-all w-full max-w-4xl max-h-[90vh] flex flex-col">
-                  <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <Dialog.Title as="h3" className="text-base font-bold text-white flex items-center gap-2">
-                        <span>👁️ Live Screen Preview</span>
+                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-left shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                  <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800/80">
+                    <div className="flex items-center gap-4">
+                      <Dialog.Title as="h3" className="text-sm font-extrabold text-white flex items-center gap-2">
+                        <span className="text-base">👁️</span> Live Screen Preview
                       </Dialog.Title>
-                      <div className="flex bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+                      <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-semibold shadow-inner">
                         <button
                           type="button"
                           onClick={() => setPreviewDevice("desktop")}
-                          className={`px-2.5 py-1 rounded-md transition ${
-                            previewDevice === "desktop" ? "bg-indigo-600 text-white font-bold" : "text-slate-400"
+                          className={`px-3 py-1 rounded-lg active:scale-[0.96] transition-all flex items-center gap-1.5 ${
+                            previewDevice === "desktop" ? "bg-indigo-600 text-white font-bold shadow-md" : "text-slate-400 hover:text-white"
                           }`}
                         >
-                          Desktop
+                          <HiDesktopComputer className="text-sm" /> Desktop
                         </button>
                         <button
                           type="button"
                           onClick={() => setPreviewDevice("mobile")}
-                          className={`px-2.5 py-1 rounded-md transition ${
-                            previewDevice === "mobile" ? "bg-indigo-600 text-white font-bold" : "text-slate-400"
+                          className={`px-3 py-1 rounded-lg active:scale-[0.96] transition-all flex items-center gap-1.5 ${
+                            previewDevice === "mobile" ? "bg-indigo-600 text-white font-bold shadow-md" : "text-slate-400 hover:text-white"
                           }`}
                         >
-                          Mobile
+                          <HiDeviceMobile className="text-sm" /> Mobile
                         </button>
                       </div>
                     </div>
-                    <button type="button" onClick={() => setShowPreviewModal(false)} className="text-slate-400 hover:text-white">
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPreviewModal(false)}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-all"
+                    >
+                      <XMarkIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
                   </div>
 
-                  <div className="p-3 sm:p-6 overflow-y-auto bg-slate-950/80 flex justify-center items-start flex-1 min-h-[500px]">
+                  <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950/80 flex justify-center items-start flex-1 min-h-[500px]">
                     <div
                       className={`bg-slate-950 border transition-all duration-300 shadow-2xl overflow-y-auto ${
                         previewDevice === "mobile"
-                          ? "w-[360px] min-h-[640px] rounded-3xl border-slate-800 ring-8 ring-slate-900"
-                          : "w-full min-h-[500px] rounded-2xl border-slate-800"
+                          ? "w-[360px] min-h-[640px] rounded-[32px] border-slate-800 ring-8 ring-slate-900 shadow-2xl shadow-indigo-500/10"
+                          : "w-full min-h-[500px] rounded-2xl border-slate-800 shadow-2xl"
                       }`}
                     >
                       {/* Browser Frame */}
-                      <div className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center gap-2 text-xs text-slate-500 rounded-t-2xl select-none">
-                        <div className="flex gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                      <div className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between text-xs text-slate-500 rounded-t-2xl select-none">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/90 inline-block"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/90 inline-block"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/90 inline-block"></span>
                         </div>
-                        <div className="bg-slate-950 border border-slate-800 px-3 py-1 rounded-lg text-slate-400 font-mono text-[10px] flex-1 max-w-[220px] mx-auto truncate text-center">
-                          {data.url ? `/${data.url.replace(/^\//, "")}` : "/new-page"}
+                        <div className="bg-slate-950 border border-slate-800/80 px-3 py-1 rounded-lg text-slate-400 font-mono text-[10px] flex items-center justify-center gap-1.5 max-w-[240px] w-full truncate shadow-inner">
+                          <span className="text-emerald-400 text-[10px]">🔒</span>
+                          <span className="truncate">{data.url ? `https://pagebuilder.app/${data.url.replace(/^\//, "")}` : "https://pagebuilder.app/new-page"}</span>
                         </div>
+                        <div className="w-10"></div>
                       </div>
 
                       {/* Modal Content Preview */}

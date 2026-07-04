@@ -7,6 +7,10 @@ import TestimonialsBlock from "@/components/blocks/TestimonialsBlock";
 import FaqBlock from "@/components/blocks/FaqBlock";
 import GalleryBlock from "@/components/blocks/GalleryBlock";
 import MarkdownBlock from "@/components/blocks/MarkdownBlock";
+import PricingBlock from "@/components/blocks/PricingBlock";
+import StatsBlock from "@/components/blocks/StatsBlock";
+import LogoCloudBlock from "@/components/blocks/LogoCloudBlock";
+import FormBlock from "@/components/blocks/FormBlock";
 
 export default function BlockRenderer({ blocks = [] }) {
   if (!blocks || blocks.length === 0) return null;
@@ -32,6 +36,14 @@ export default function BlockRenderer({ blocks = [] }) {
             return <GalleryBlock key={key} data={data} />;
           case "markdown":
             return <MarkdownBlock key={key} data={data} />;
+          case "pricing":
+            return <PricingBlock key={key} data={data} />;
+          case "stats":
+            return <StatsBlock key={key} data={data} />;
+          case "logocloud":
+            return <LogoCloudBlock key={key} data={data} />;
+          case "form":
+            return <FormBlock key={key} data={data} />;
           default:
             return null;
         }
