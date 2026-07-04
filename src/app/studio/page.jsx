@@ -5,6 +5,8 @@ import MarkdownRender from "@/components/MarkdownRender";
 import BlockBuilder from "@/components/BlockBuilder";
 import BlockRenderer from "@/components/BlockRenderer";
 import SeoPreview from "@/components/SeoPreview";
+import ThemeSelector from "@/components/ThemeSelector";
+import BlockStyleEditor from "@/components/BlockStyleEditor";
 import { IoIosArrowBack } from "react-icons/io";
 import { FiMoreHorizontal } from "react-icons/fi";
 import {
@@ -18,6 +20,7 @@ import {
   HiDesktopComputer,
   HiGlobe,
   HiCheck,
+  HiColorSwatch,
 } from "react-icons/hi";
 import React, { useState, useEffect, Fragment, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -41,6 +44,7 @@ function StudioContent() {
   const [contentTab, setContentTab] = useState("blocks");
   const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
 
   const [data, setData] = useState({
     title: "",
@@ -56,6 +60,14 @@ function StudioContent() {
     metaTitle: "",
     metaDescription: "",
     ogImage: "",
+    theme: "slate",
+    fontFamily: "Inter",
+    bgColor: "#0f172a",
+    textColor: "#f8fafc",
+    fontStyle: "sans",
+    fontSize: "base",
+    spacing: "normal",
+    customCss: "",
   });
 
   const getBlogData = async (blogId) => {
@@ -83,6 +95,14 @@ function StudioContent() {
           metaTitle: response.blog.metaTitle || response.blog.title || "",
           metaDescription: response.blog.metaDescription || response.blog.subText || "",
           ogImage: response.blog.ogImage || "",
+          theme: response.blog.theme || "slate",
+          fontFamily: response.blog.fontFamily || "Inter",
+          bgColor: response.blog.bgColor || "#0f172a",
+          textColor: response.blog.textColor || "#f8fafc",
+          fontStyle: response.blog.fontStyle || "sans",
+          fontSize: response.blog.fontSize || "base",
+          spacing: response.blog.spacing || "normal",
+          customCss: response.blog.customCss || "",
         });
       }
     } catch (err) {
@@ -186,6 +206,14 @@ function StudioContent() {
           metaTitle: data.metaTitle,
           metaDescription: data.metaDescription,
           ogImage: data.ogImage,
+          theme: data.theme,
+          fontFamily: data.fontFamily,
+          bgColor: data.bgColor,
+          textColor: data.textColor,
+          fontStyle: data.fontStyle,
+          fontSize: data.fontSize,
+          spacing: data.spacing,
+          customCss: data.customCss,
         }),
       });
       const response = await res.json();
@@ -219,6 +247,14 @@ function StudioContent() {
           metaTitle: data.metaTitle,
           metaDescription: data.metaDescription,
           ogImage: data.ogImage,
+          theme: data.theme,
+          fontFamily: data.fontFamily,
+          bgColor: data.bgColor,
+          textColor: data.textColor,
+          fontStyle: data.fontStyle,
+          fontSize: data.fontSize,
+          spacing: data.spacing,
+          customCss: data.customCss,
         }),
       });
       const response = await res.json();
@@ -506,6 +542,17 @@ function StudioContent() {
                     >
                       🎯 SEO & Metadata
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setContentTab("theme")}
+                      className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
+                        contentTab === "theme"
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      🎨 Theme & Styling
+                    </button>
                   </div>
                 </div>
 
@@ -514,7 +561,7 @@ function StudioContent() {
                     blocks={data.blocks || []}
                     onChange={(newBlocks) => setData({ ...data, blocks: newBlocks })}
                   />
-                ) : (
+                ) : contentTab === "seo" ? (
                   <SeoPreview
                     title={data.title}
                     subText={data.subText}
@@ -524,14 +571,24 @@ function StudioContent() {
                     ogImage={data.ogImage}
                     onChange={(field, val) => setData((prev) => ({ ...prev, [field]: val }))}
                   />
+                ) : (
+                  <ThemeSelector
+                    bgColor={data.bgColor || "#0f172a"}
+                    textColor={data.textColor || "#f8fafc"}
+                    fontStyle={data.fontStyle || "sans"}
+                    fontSize={data.fontSize || "base"}
+                    spacing={data.spacing || "normal"}
+                    customCss={data.customCss || ""}
+                    onChange={(field, val) => setData((prev) => ({ ...prev, [field]: val }))}
+                  />
                 )}
               </div>
             </div>
 
             {/* Sidebar Configuration Panel */}
             <div
-              className={`transition-all duration-300 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-xl ${
-                isConfigCollapsed ? "w-full xl:w-16 p-3 flex flex-col items-center" : "w-full xl:w-80 p-6 space-y-6"
+              className={`transition-all duration-300 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-xl sticky top-6 self-start z-30 ${
+                isConfigCollapsed ? "w-full xl:w-16 p-3 flex flex-col items-center" : "w-full xl:w-80 p-5 space-y-5"
               }`}
             >
               {isConfigCollapsed ? (
@@ -549,7 +606,7 @@ function StudioContent() {
                 </button>
               ) : (
                 <>
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <h3 className="text-sm font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
                       <HiCog className="text-indigo-400 text-base" /> Configuration
                     </h3>
@@ -625,28 +682,69 @@ function StudioContent() {
                       {!data.blocks || data.blocks.length === 0 ? (
                         <p className="text-[11px] text-slate-500 italic">No section blocks added yet.</p>
                       ) : (
-                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                          {data.blocks.map((b, i) => (
-                            <div
-                              key={b.id || i}
-                              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] hover:border-indigo-500/30 hover:bg-slate-900/90 transition-all shadow-sm"
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                <span className="font-mono text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-1.5 py-0.5 rounded-md border border-indigo-500/25">
-                                  #{i + 1}
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                          {data.blocks.map((b, i) => {
+                            const isSelected = selectedBlockIndex === i;
+                            return (
+                              <button
+                                key={b.id || i}
+                                type="button"
+                                onClick={() => setSelectedBlockIndex(i)}
+                                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-[11px] transition-all shadow-sm ${
+                                  isSelected
+                                    ? "bg-slate-900 border-indigo-500 ring-1 ring-indigo-500/30"
+                                    : "bg-slate-950 border-slate-800/80 hover:border-indigo-500/30 hover:bg-slate-900/90"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <span className="font-mono text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-1.5 py-0.5 rounded-md border border-indigo-500/25">
+                                    #{i + 1}
+                                  </span>
+                                  <span className="font-bold text-slate-200 uppercase truncate">
+                                    {b.type}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-medium text-slate-400 truncate max-w-[100px]">
+                                  {b.data?.title || b.data?.headline || "Block"}
                                 </span>
-                                <span className="font-bold text-slate-200 uppercase truncate">
-                                  {b.type}
-                                </span>
-                              </div>
-                              <span className="text-[10px] font-medium text-slate-400 truncate max-w-[100px]">
-                                {b.data?.title || b.data?.headline || "Block"}
-                              </span>
-                            </div>
-                          ))}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
+
+                    {/* Block Custom Styling & Spacing in Right Configuration Panel */}
+                    {data.blocks && data.blocks.length > 0 && data.blocks[selectedBlockIndex] && (
+                      <div className="pt-4 border-t border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-slate-200 font-extrabold flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                            <HiColorSwatch className="text-indigo-400" />
+                            <span>Block Styling (#{selectedBlockIndex + 1})</span>
+                          </label>
+                          <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded-full border border-indigo-500/25 uppercase">
+                            {data.blocks[selectedBlockIndex]?.type}
+                          </span>
+                        </div>
+
+                        <BlockStyleEditor
+                          style={data.blocks[selectedBlockIndex]?.data?.style || {}}
+                          onChange={(newStyle) => {
+                            const updatedBlocks = [...data.blocks];
+                            if (updatedBlocks[selectedBlockIndex]) {
+                              updatedBlocks[selectedBlockIndex] = {
+                                ...updatedBlocks[selectedBlockIndex],
+                                data: {
+                                  ...updatedBlocks[selectedBlockIndex].data,
+                                  style: newStyle,
+                                },
+                              };
+                              setData({ ...data, blocks: updatedBlocks });
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </>
               )}

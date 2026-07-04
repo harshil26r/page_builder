@@ -12,42 +12,138 @@ import StatsBlock from "@/components/blocks/StatsBlock";
 import LogoCloudBlock from "@/components/blocks/LogoCloudBlock";
 import FormBlock from "@/components/blocks/FormBlock";
 
-export default function BlockRenderer({ blocks = [] }) {
-  if (!blocks || blocks.length === 0) return null;
+export default function BlockRenderer({ block, blocks, pageStyle = {} }) {
+  const blockList = blocks ? blocks : block ? [block] : [];
+  if (!blockList || blockList.length === 0) return null;
+
+  const pageFontClass =
+    pageStyle.fontStyle === "serif"
+      ? "font-serif"
+      : pageStyle.fontStyle === "mono"
+      ? "font-mono"
+      : pageStyle.fontStyle === "display"
+      ? "font-extrabold tracking-tight"
+      : "font-sans";
+
+  const pageFontSizeClass =
+    pageStyle.fontSize === "sm"
+      ? "text-sm"
+      : pageStyle.fontSize === "lg"
+      ? "text-lg"
+      : pageStyle.fontSize === "xl"
+      ? "text-xl"
+      : "text-base";
+
+  const pageSpacingClass =
+    pageStyle.spacing === "compact"
+      ? "space-y-6 py-2"
+      : pageStyle.spacing === "spacious"
+      ? "space-y-16 py-8"
+      : pageStyle.spacing === "hero"
+      ? "space-y-24 py-12"
+      : "space-y-10 py-4";
+
+  const containerStyle = {};
+  if (pageStyle.bgColor) containerStyle.backgroundColor = pageStyle.bgColor;
+  if (pageStyle.textColor) containerStyle.color = pageStyle.textColor;
 
   return (
-    <div className="space-y-12 sm:space-y-16 py-4 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-      {blocks.map((block, idx) => {
-        const key = block.id || idx;
-        const data = block.data || {};
+    <div
+      className={`rounded-3xl transition-all duration-300 ${pageFontClass} ${pageFontSizeClass} ${pageSpacingClass} selection:bg-indigo-500/30 selection:text-indigo-200`}
+      style={containerStyle}
+    >
+      {pageStyle.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: pageStyle.customCss }} />
+      )}
 
-        switch (block.type) {
+      {blockList.map((bItem, idx) => {
+        const key = bItem.id || idx;
+        const data = bItem.data || {};
+        const style = data.style || {};
+
+        const fontStyleClass =
+          style.fontStyle === "serif"
+            ? "font-serif"
+            : style.fontStyle === "mono"
+            ? "font-mono"
+            : style.fontStyle === "display"
+            ? "font-extrabold tracking-tight"
+            : "";
+
+        const fontSizeClass =
+          style.fontSize === "sm"
+            ? "text-sm"
+            : style.fontSize === "lg"
+            ? "text-lg"
+            : style.fontSize === "xl"
+            ? "text-xl"
+            : "";
+
+        const spacingClass =
+          style.spacing === "compact"
+            ? "py-4 px-3"
+            : style.spacing === "spacious"
+            ? "py-16 px-6"
+            : style.spacing === "hero"
+            ? "py-24 px-8"
+            : "py-8 px-4";
+
+        const blockInlineStyle = {};
+        if (style.bgColor) blockInlineStyle.backgroundColor = style.bgColor;
+        if (style.textColor) blockInlineStyle.color = style.textColor;
+
+        let content = null;
+        switch (bItem.type) {
           case "hero":
-            return <HeroBlock key={key} data={data} />;
+            content = <HeroBlock data={data} />;
+            break;
           case "features":
-            return <FeaturesBlock key={key} data={data} />;
+            content = <FeaturesBlock data={data} />;
+            break;
           case "cta":
-            return <CtaBlock key={key} data={data} />;
+            content = <CtaBlock data={data} />;
+            break;
           case "testimonials":
-            return <TestimonialsBlock key={key} data={data} />;
+            content = <TestimonialsBlock data={data} />;
+            break;
           case "faq":
-            return <FaqBlock key={key} data={data} />;
+            content = <FaqBlock data={data} />;
+            break;
           case "gallery":
-            return <GalleryBlock key={key} data={data} />;
+            content = <GalleryBlock data={data} />;
+            break;
           case "markdown":
-            return <MarkdownBlock key={key} data={data} />;
+            content = <MarkdownBlock data={data} />;
+            break;
           case "pricing":
-            return <PricingBlock key={key} data={data} />;
+            content = <PricingBlock data={data} />;
+            break;
           case "stats":
-            return <StatsBlock key={key} data={data} />;
+            content = <StatsBlock data={data} />;
+            break;
           case "logocloud":
-            return <LogoCloudBlock key={key} data={data} />;
+            content = <LogoCloudBlock data={data} />;
+            break;
           case "form":
-            return <FormBlock key={key} data={data} />;
+            content = <FormBlock data={data} />;
+            break;
           default:
-            return null;
+            content = null;
         }
+
+        if (!content) return null;
+
+        return (
+          <div
+            key={key}
+            className={`rounded-2xl transition-all duration-200 ${fontStyleClass} ${fontSizeClass} ${spacingClass}`}
+            style={blockInlineStyle}
+          >
+            {content}
+          </div>
+        );
       })}
     </div>
   );
 }
+
