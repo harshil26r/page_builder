@@ -176,12 +176,12 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index);
+    e.dataTransfer.setData("application/json", JSON.stringify({ action: "reorder_block", index }));
   };
 
   const handleDragOver = (e, index) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = "copy";
     if (dragOverIndex !== index) {
       setDragOverIndex(index);
     }
@@ -189,18 +189,40 @@ export default function BlockBuilder({ blocks = [], onChange }) {
 
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-    const updated = [...blocks];
-    const [moved] = updated.splice(draggedIndex, 1);
-    updated.splice(dropIndex, 0, moved);
-    onChange(updated);
-    setActiveBlockIndex(dropIndex);
-    setDraggedIndex(null);
     setDragOverIndex(null);
+    setDraggedIndex(null);
+
+    const rawData = e.dataTransfer.getData("application/json");
+    if (!rawData) return;
+
+    try {
+      const payload = JSON.parse(rawData);
+
+      if (payload.action === "add_block" && payload.type) {
+        const blockDef = BLOCK_TYPES.find((b) => b.type === payload.type);
+        if (!blockDef) return;
+        const newBlock = {
+          id: "block_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+          type: payload.type,
+          data: JSON.parse(JSON.stringify(blockDef.defaultData)),
+        };
+        const updated = [...blocks];
+        const insertAt = dropIndex !== null ? dropIndex : updated.length;
+        updated.splice(insertAt, 0, newBlock);
+        onChange(updated);
+        setActiveBlockIndex(insertAt);
+      } else if (payload.action === "reorder_block" && typeof payload.index === "number") {
+        const fromIndex = payload.index;
+        if (fromIndex === dropIndex || dropIndex === null) return;
+        const updated = [...blocks];
+        const [moved] = updated.splice(fromIndex, 1);
+        updated.splice(dropIndex, 0, moved);
+        onChange(updated);
+        setActiveBlockIndex(dropIndex);
+      }
+    } catch (err) {
+      console.error("Drag and drop drop parse error:", err);
+    }
   };
 
   const updateBlockData = (index, field, value) => {
@@ -228,7 +250,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
                 Add Section Block
               </h4>
-              <p className="text-[11px] text-slate-400">Tap any block below to add it to your page</p>
+              <p className="text-[11px] text-slate-400">Tap or drag any block card below to insert it into your layout</p>
             </div>
           </div>
           <span className="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
@@ -241,11 +263,15 @@ export default function BlockBuilder({ blocks = [], onChange }) {
           {BLOCK_TYPES.map((b) => {
             const Icon = b.icon;
             return (
-              <button
+              <div
                 key={b.type}
-                type="button"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("application/json", JSON.stringify({ action: "add_block", type: b.type }));
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
                 onClick={() => addBlock(b.type)}
-                className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200"
+                className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none"
               >
                 <div
                   className={`p-2.5 rounded-xl bg-gradient-to-br ${b.gradient} text-white shadow-md group-hover:scale-110 transition-transform shrink-0`}
@@ -265,7 +291,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                     {b.description}
                   </p>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -273,14 +299,21 @@ export default function BlockBuilder({ blocks = [], onChange }) {
 
       {/* Active Added Blocks List with HTML5 Drag & Drop */}
       {blocks.length === 0 ? (
-        <div className="text-center py-14 px-4 border-2 border-dashed border-slate-800/80 rounded-2xl bg-slate-950/40 text-slate-500 space-y-3">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }}
+          onDrop={(e) => handleDrop(e, 0)}
+          className="text-center py-14 px-4 border-2 border-dashed border-slate-800/80 hover:border-indigo-500/60 rounded-2xl bg-slate-950/40 text-slate-500 space-y-3 transition"
+        >
           <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
             <HiSparkles className="w-6 h-6 animate-pulse" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-300">Your page layout is empty</p>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              Select a block from above to start building your landing page visually.
+              Drag & drop a block card from above here, or click any block card to add it to your page layout.
             </p>
           </div>
         </div>

@@ -141,7 +141,7 @@ export default function Home() {
               <button
                 type="submit"
                 onClick={() => {
-                  router.push("/editpage");
+                  router.push("/studio");
                 }}
                 className="flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-indigo-600 hover:to-purple-700 transition duration-150 transform hover:-translate-y-0.5 active:translate-y-0"
               >
@@ -167,7 +167,7 @@ export default function Home() {
 
               <button
                 onClick={() => {
-                  router.push("/editpage");
+                  router.push("/studio");
                 }}
                 className="flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:from-indigo-600 hover:to-purple-700 transition duration-150 transform hover:-translate-y-0.5"
               >
@@ -285,7 +285,7 @@ export default function Home() {
                                   <div className="absolute right-0 mt-2 w-32 rounded-xl bg-gray-900 border border-gray-800 py-1.5 shadow-2xl focus:outline-none z-50">
                                     <button
                                       onClick={() => {
-                                        router.push(`/editpage?id=${item._id}`);
+                                        router.push(`/studio?id=${item._id}`);
                                       }}
                                       className="block w-full text-left px-4 py-2 text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition duration-150"
                                     >
