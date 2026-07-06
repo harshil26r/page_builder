@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import RichTextEditor from "@/components/RichTextEditor";
+import BlockStyleEditor from "@/components/BlockStyleEditor";
 import {
   HiPlus,
   HiTrash,
@@ -269,14 +270,17 @@ export default function BlockBuilder({ blocks = [], onChange }) {
 
   // Drag and Drop Event Handlers
   const handleDragStart = (e, index) => {
+    e.stopPropagation();
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("application/json", JSON.stringify({ action: "reorder_block", index }));
+    const payload = JSON.stringify({ action: "reorder_block", index });
+    e.dataTransfer.setData("application/json", payload);
+    e.dataTransfer.setData("text/plain", String(index));
   };
 
   const handleDragOver = (e, index) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
+    e.dataTransfer.dropEffect = "move";
     if (dragOverIndex !== index) {
       setDragOverIndex(index);
     }
@@ -284,39 +288,47 @@ export default function BlockBuilder({ blocks = [], onChange }) {
 
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverIndex(null);
     setDraggedIndex(null);
 
-    const rawData = e.dataTransfer.getData("application/json");
-    if (!rawData) return;
+    const jsonRaw = e.dataTransfer.getData("application/json");
+    const textRaw = e.dataTransfer.getData("text/plain");
 
-    try {
-      const payload = JSON.parse(rawData);
-
-      if (payload.action === "add_block" && payload.type) {
-        const blockDef = BLOCK_TYPES.find((b) => b.type === payload.type);
-        if (!blockDef) return;
-        const newBlock = {
-          id: "block_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
-          type: payload.type,
-          data: JSON.parse(JSON.stringify(blockDef.defaultData)),
-        };
-        const updated = [...blocks];
-        const insertAt = dropIndex !== null ? dropIndex : updated.length;
-        updated.splice(insertAt, 0, newBlock);
-        onChange(updated);
-        setActiveBlockIndex(insertAt);
-      } else if (payload.action === "reorder_block" && typeof payload.index === "number") {
-        const fromIndex = payload.index;
-        if (fromIndex === dropIndex || dropIndex === null) return;
-        const updated = [...blocks];
-        const [moved] = updated.splice(fromIndex, 1);
-        updated.splice(dropIndex, 0, moved);
-        onChange(updated);
-        setActiveBlockIndex(dropIndex);
+    let payload = null;
+    if (jsonRaw) {
+      try {
+        payload = JSON.parse(jsonRaw);
+      } catch (err) {
+        console.error("JSON drag payload parse error:", err);
       }
-    } catch (err) {
-      console.error("Drag and drop drop parse error:", err);
+    } else if (textRaw && !isNaN(parseInt(textRaw, 10))) {
+      payload = { action: "reorder_block", index: parseInt(textRaw, 10) };
+    }
+
+    if (!payload) return;
+
+    if (payload.action === "add_block" && payload.type) {
+      const blockDef = BLOCK_TYPES.find((b) => b.type === payload.type);
+      if (!blockDef) return;
+      const newBlock = {
+        id: "block_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+        type: payload.type,
+        data: JSON.parse(JSON.stringify(blockDef.defaultData)),
+      };
+      const updated = [...blocks];
+      const insertAt = dropIndex !== null ? dropIndex : updated.length;
+      updated.splice(insertAt, 0, newBlock);
+      onChange(updated);
+      setActiveBlockIndex(insertAt);
+    } else if (payload.action === "reorder_block" && typeof payload.index === "number") {
+      const fromIndex = payload.index;
+      if (fromIndex < 0 || fromIndex >= blocks.length || dropIndex === null || fromIndex === dropIndex) return;
+      const updated = [...blocks];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(dropIndex, 0, moved);
+      onChange(updated);
+      setActiveBlockIndex(dropIndex);
     }
   };
 
@@ -486,34 +498,34 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                   <div className="flex items-center gap-1 shrink-0 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
                     <button
                       type="button"
-                      onClick={() => moveBlock(idx, -1)}
+                      onClick={(e) => { e.stopPropagation(); moveBlock(idx, -1); }}
                       disabled={idx === 0}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-20"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-20 transition"
                       title="Move Up"
                     >
                       <HiChevronUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => moveBlock(idx, 1)}
+                      onClick={(e) => { e.stopPropagation(); moveBlock(idx, 1); }}
                       disabled={idx === blocks.length - 1}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-20"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-20 transition"
                       title="Move Down"
                     >
                       <HiChevronDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => duplicateBlock(idx)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800"
+                      onClick={(e) => { e.stopPropagation(); duplicateBlock(idx); }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition"
                       title="Duplicate Block"
                     >
                       <HiDuplicate className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeBlock(idx)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800"
+                      onClick={(e) => { e.stopPropagation(); removeBlock(idx); }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition"
                       title="Delete Block"
                     >
                       <HiTrash className="w-3.5 h-3.5" />
