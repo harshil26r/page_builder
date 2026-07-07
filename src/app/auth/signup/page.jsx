@@ -212,33 +212,36 @@ const Signup = () => {
         theme="dark"
       />
 
-      <div className="relative flex min-h-screen items-center justify-center bg-gray-950 overflow-hidden px-4 py-12">
-        {/* Decorative Background Blobs */}
-        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-600/30 rounded-full filter blur-[80px]" />
-        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-purple-600/25 rounded-full filter blur-[100px]" />
+      <div className="relative flex min-h-screen items-center justify-center bg-[#070a12] bg-grid-pattern overflow-hidden px-4 py-12">
+        {/* Decorative Background Glows */}
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/15 rounded-full filter blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-purple-600/20 rounded-full filter blur-[100px]" />
 
         <div className="relative z-10 w-full max-w-lg">
-          <div className="backdrop-blur-xl bg-gray-900/60 border border-gray-800 p-8 md:p-10 rounded-2xl shadow-2xl">
+          <div className="glass-panel-elevated p-8 md:p-10 rounded-3xl border border-white/10 shadow-2xl">
             {step === "form" ? (
               <>
                 <div className="text-center mb-8">
-                  <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-purple-600 text-white font-mono font-bold text-xl mb-4 shadow-lg shadow-indigo-500/20">
+                    A
+                  </div>
+                  <h2 className="text-3xl font-extrabold tracking-tight gradient-text-aura">
                     Create Account
                   </h2>
-                  <p className="text-gray-400 mt-2 text-sm">
-                    Build beautiful responsive pages in seconds
+                  <p className="text-slate-400 mt-2 text-xs font-medium">
+                    Build, publish, and style high-performance glassmorphic pages
                   </p>
                 </div>
 
-                <form className="space-y-5" onSubmit={handleSendOtp}>
+                <form className="space-y-4" onSubmit={handleSendOtp}>
                   <div>
                     <label
                       htmlFor="username"
-                      className="block text-sm font-medium text-gray-300"
+                      className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1"
                     >
-                      User name <span className="text-red-400">*</span>
+                      User Name <span className="text-cyan-400">*</span>
                     </label>
-                    <div className="mt-1.5">
+                    <div>
                       <input
                         id="username"
                         value={data.username}
@@ -246,11 +249,11 @@ const Signup = () => {
                         name="username"
                         type="text"
                         placeholder="John Doe"
-                        className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        className="block w-full rounded-2xl border border-white/10 bg-slate-950/70 py-2.5 px-4 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all font-medium"
                       />
                     </div>
                     {errors.username && (
-                      <span className="text-red-400 text-xs mt-1 block">
+                      <span className="text-rose-400 text-xs mt-1 block">
                         {errors.username}
                       </span>
                     )}
@@ -259,11 +262,11 @@ const Signup = () => {
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-gray-300"
+                      className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1"
                     >
-                      Email address <span className="text-red-400">*</span>
+                      Email Address <span className="text-cyan-400">*</span>
                     </label>
-                    <div className="mt-1.5">
+                    <div>
                       <input
                         id="email"
                         value={data.email}
@@ -271,11 +274,11 @@ const Signup = () => {
                         name="email"
                         type="text"
                         placeholder="you@example.com"
-                        className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        className="block w-full rounded-2xl border border-white/10 bg-slate-950/70 py-2.5 px-4 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all font-medium"
                       />
                     </div>
                     {errors.email && (
-                      <span className="text-red-400 text-xs mt-1 block">
+                      <span className="text-rose-400 text-xs mt-1 block">
                         {errors.email}
                       </span>
                     )}
@@ -284,11 +287,11 @@ const Signup = () => {
                   <div>
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-gray-300"
+                      className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1"
                     >
-                      Password <span className="text-red-400">*</span>
+                      Password <span className="text-cyan-400">*</span>
                     </label>
-                    <div className="mt-1.5">
+                    <div>
                       <input
                         id="password"
                         value={data.password}
@@ -296,11 +299,11 @@ const Signup = () => {
                         name="password"
                         type="password"
                         placeholder="••••••••"
-                        className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        className="block w-full rounded-2xl border border-white/10 bg-slate-950/70 py-2.5 px-4 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all font-medium"
                       />
                     </div>
                     {errors.password && (
-                      <span className="text-red-400 text-xs mt-1 block">
+                      <span className="text-rose-400 text-xs mt-1 block">
                         {errors.password}
                       </span>
                     )}
@@ -309,11 +312,11 @@ const Signup = () => {
                   <div>
                     <label
                       htmlFor="cPassword"
-                      className="block text-sm font-medium text-gray-300"
+                      className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1"
                     >
-                      Confirm Password <span className="text-red-400">*</span>
+                      Confirm Password <span className="text-cyan-400">*</span>
                     </label>
-                    <div className="mt-1.5">
+                    <div>
                       <input
                         id="cPassword"
                         value={data.cPassword}
@@ -321,17 +324,17 @@ const Signup = () => {
                         name="cPassword"
                         type="password"
                         placeholder="••••••••"
-                        className="block w-full rounded-xl border border-gray-800 bg-gray-900/50 py-2.5 px-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                        className="block w-full rounded-2xl border border-white/10 bg-slate-950/70 py-2.5 px-4 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all font-medium"
                       />
                     </div>
                     {errors.cPassword && (
-                      <span className="text-red-400 text-xs mt-1 block">
+                      <span className="text-rose-400 text-xs mt-1 block">
                         {errors.cPassword}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center mt-2">
+                  <div className="flex items-center pt-1">
                     <input
                       id="isSubscribe"
                       name="isSubscribe"
@@ -340,20 +343,20 @@ const Signup = () => {
                       onChange={(e) =>
                         setData({ ...data, isSubscribe: e.target.checked })
                       }
-                      className="w-4.5 h-4.5 rounded border-gray-800 bg-gray-900 text-indigo-500 focus:ring-indigo-500/50 focus:ring-offset-gray-900"
+                      className="w-4 h-4 rounded border-white/10 bg-slate-950 text-cyan-400 focus:ring-cyan-400/40"
                     />
                     <label
                       htmlFor="isSubscribe"
-                      className="ms-2.5 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition duration-150"
+                      className="ms-2 text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition"
                     >
-                      Subscribe to our newsletter
+                      Subscribe to product updates & releases
                     </label>
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex justify-center items-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 px-4 text-sm font-semibold text-white shadow-lg hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transform hover:-translate-y-0.5 active:translate-y-0 transition duration-150 mt-6"
+                    className="w-full flex justify-center items-center rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 py-3 px-4 text-xs font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all mt-6"
                   >
                     {loading ? (
                       <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -365,11 +368,11 @@ const Signup = () => {
                     )}
                   </button>
 
-                  <div className="mt-6 text-center text-sm text-gray-500">
+                  <div className="mt-6 text-center text-xs text-slate-400 font-medium">
                     Already have an account?{" "}
                     <Link
                       href="/auth/login"
-                      className="text-indigo-400 hover:text-indigo-300 font-semibold underline transition duration-150"
+                      className="text-cyan-400 hover:text-cyan-300 font-bold underline transition"
                     >
                       Sign In
                     </Link>

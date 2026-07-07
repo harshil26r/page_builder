@@ -13,22 +13,24 @@ export default function LogoCloudBlock({ data }) {
   ];
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-y border-slate-800/60 my-6">
-      {headline && (
-        <h3 className="text-center text-xs font-extrabold uppercase tracking-widest text-slate-500 mb-8">
-          {headline}
-        </h3>
-      )}
-      <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-75 hover:opacity-100 transition-opacity">
-        {logos.map((logo, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-2 text-slate-400 hover:text-white font-extrabold tracking-widest text-lg font-mono transition-colors cursor-pointer select-none px-3 py-1.5 rounded-xl hover:bg-slate-900/50 border border-transparent hover:border-slate-800"
-          >
-            <span className="text-indigo-400">❖</span>
-            <span>{logo.text || logo.name}</span>
-          </div>
-        ))}
+    <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto my-6 font-sans">
+      <div className="glass-panel rounded-3xl p-8 border border-white/10 shadow-xl space-y-6">
+        {headline && (
+          <h3 className="text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+            {headline}
+          </h3>
+        )}
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+          {logos.map((logo, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2.5 text-slate-400 hover:text-white font-mono font-extrabold text-sm sm:text-base tracking-widest transition-all duration-300 cursor-pointer select-none px-4 py-2 rounded-2xl hover:bg-slate-900/80 border border-slate-800/60 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10"
+            >
+              <span className="text-indigo-400 text-xs">◆</span>
+              <span>{logo.text || logo.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

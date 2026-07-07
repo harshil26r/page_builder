@@ -16,46 +16,55 @@ export default function FeaturesBlock({ data = {} }) {
   };
 
   return (
-    <section className="py-4 sm:py-6 space-y-6 font-sans">
+    <section className="py-6 sm:py-10 space-y-8 font-sans">
       {title && (
-        <div className="text-center space-y-2 max-w-2xl mx-auto px-2">
-          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">{title}</h2>
-          {subtitle && <p className="text-slate-400 text-xs sm:text-sm">{subtitle}</p>}
+        <div className="text-center space-y-3 max-w-2xl mx-auto px-4">
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-slate-400 text-xs sm:text-base font-normal">{subtitle}</p>
+          )}
         </div>
       )}
 
-      {/* Mobile Horizontal Carousel / Desktop Grid */}
+      {/* Bento Grid Cards */}
       <div className="relative">
         <div
           onScroll={handleScroll}
-          className="flex sm:grid overflow-x-auto sm:overflow-x-visible snap-x snap-mandatory sm:snap-none sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-4 sm:pb-0 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0"
+          className="flex sm:grid overflow-x-auto sm:overflow-x-visible snap-x snap-mandatory sm:snap-none sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 pb-4 sm:pb-0 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0"
         >
           {(items || []).map((item, itemIdx) => (
             <div
               key={itemIdx}
-              className="shrink-0 w-[85%] sm:w-auto snap-center group relative bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-5 sm:p-6 space-y-3 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 backdrop-blur-xl flex flex-col justify-between"
+              className="shrink-0 w-[85%] sm:w-auto snap-center group relative glass-card rounded-3xl p-6 sm:p-8 space-y-4 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between overflow-hidden"
             >
-              <div className="space-y-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xl sm:text-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              {/* Subtle top border glow */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-indigo-400 transition-all duration-300 shadow-inner text-indigo-300">
                   {item.icon || "⚡"}
                 </div>
-                <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
                   {item.title}
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                  {item.description}
+                </p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Mobile Carousel Indicators */}
+        {/* Carousel Indicators for Mobile */}
         {items && items.length > 1 && (
-          <div className="sm:hidden flex items-center justify-center gap-1.5 pt-2">
+          <div className="sm:hidden flex items-center justify-center gap-2 pt-3">
             {items.map((_, dotIdx) => (
               <div
                 key={dotIdx}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeSlide === dotIdx ? "w-5 bg-indigo-500" : "w-1.5 bg-slate-700"
+                  activeSlide === dotIdx ? "w-6 bg-indigo-500" : "w-1.5 bg-slate-800"
                 }`}
               />
             ))}

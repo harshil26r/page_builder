@@ -361,25 +361,29 @@ function StudioContent() {
         theme="dark"
       />
 
-      <div className="flex bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+      <div className="flex bg-[#070a12] bg-grid-pattern text-slate-100 min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative overflow-x-hidden">
         <Sidebar />
 
-        <div className="flex flex-col w-full min-h-screen pb-24 md:pb-8">
+        <div className="flex flex-col w-full min-h-screen pb-24 md:pb-8 relative">
+          {/* Subtle Ambient Glow Blobs */}
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/3 w-[30rem] h-[30rem] bg-purple-500/10 rounded-full blur-[140px] pointer-events-none" />
+
           {/* Top Glassmorphic Navigation Bar */}
-          <header className="sticky top-0 z-40 flex flex-wrap p-4 md:px-8 w-full justify-between items-center border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-2xl gap-4 shadow-sm">
+          <header className="sticky top-0 z-40 flex flex-wrap p-4 md:px-8 w-full justify-between items-center border-b border-white/10 bg-[#070a12]/80 backdrop-blur-2xl gap-4 shadow-xl">
             <div className="flex items-center gap-3">
               <button
-                className="flex items-center justify-center h-10 w-10 rounded-2xl border border-slate-800 bg-slate-900/70 text-slate-400 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-transform shadow-sm"
+                className="flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-slate-900/80 text-slate-400 hover:text-white hover:border-cyan-400/40 hover:bg-slate-800 active:scale-[0.96] transition-all shadow-sm"
                 onClick={() => router.push("/")}
-                title="Back to Dashboard"
+                title="Back to Pages Directory"
               >
-                <IoIosArrowBack className="text-xl" />
+                <IoIosArrowBack className="text-xl text-cyan-400" />
               </button>
               <div className="ms-1 py-0.5">
                 <h1 className="font-extrabold text-lg md:text-xl text-white tracking-tight flex items-center gap-2.5">
-                  <span>{id || currentBlogId ? "Studio Page Editor" : "New Page Studio"}</span>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-indigo-300 bg-indigo-500/15 px-2.5 py-0.5 rounded-full border border-indigo-500/30 shadow-inner">
-                    <HiSparkles className="text-indigo-400" /> Content Studio
+                  <span className="gradient-text-aura">{id || currentBlogId ? "Studio Page Editor" : "New Page Studio"}</span>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase font-extrabold font-mono text-cyan-300 bg-cyan-500/15 px-2.5 py-0.5 rounded-full border border-cyan-500/30 shadow-inner">
+                    <HiSparkles className="text-cyan-400" /> Content Studio
                   </span>
                 </h1>
                 {(id || currentBlogId) && (
@@ -387,18 +391,18 @@ function StudioContent() {
                     <span
                       className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                         currentBlog.status === "draft"
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
                           : currentBlog.status === "scheduled"
-                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                          ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"
                           : currentBlog.status === "published"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
                           : "bg-slate-800 text-slate-400 border border-slate-700"
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
                           currentBlog.status === "published"
-                            ? "bg-emerald-400 animate-pulse"
+                            ? "bg-emerald-400 status-dot-active"
                             : currentBlog.status === "scheduled"
                             ? "bg-indigo-400"
                             : "bg-amber-400"
@@ -417,7 +421,7 @@ function StudioContent() {
               <button
                 type="button"
                 onClick={() => setShowPreviewModal(true)}
-                className="h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/70 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white active:scale-[0.96] transition-all flex items-center gap-1.5 shadow-sm"
+                className="h-10 px-3.5 rounded-2xl border border-white/10 bg-slate-900/80 hover:bg-slate-800 hover:border-cyan-400/30 text-xs font-bold text-slate-300 hover:text-white active:scale-[0.96] transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <span>👁️</span> Quick Preview
               </button>
@@ -429,26 +433,26 @@ function StudioContent() {
                     e.stopPropagation();
                     setShowActionsDropdown(!showActionsDropdown);
                   }}
-                  className="flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-2xl border border-slate-800 bg-slate-900/70 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-all shadow-sm"
+                  className="flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-2xl border border-white/10 bg-slate-900/80 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 active:scale-[0.96] transition-all shadow-sm"
                 >
                   Actions <FiMoreHorizontal size={14} />
                 </button>
                 {showActionsDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-slate-900 border border-slate-800 py-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/10 py-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
                     <button
                       type="button"
                       onClick={() => {
                         setShowActionsDropdown(false);
                         handleLiveUrlPreview();
                       }}
-                      className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                     >
                       🔗 Live URL Preview
                     </button>
                     {(id || currentBlogId) && (
                       <button
                         onClick={handleDeleteBlog}
-                        className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-red-400/90 hover:bg-red-500/10 hover:text-red-400 transition-colors border-t border-slate-800/60 mt-1"
+                        className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors border-t border-white/10 mt-1"
                       >
                         🗑️ Delete Page
                       </button>
@@ -459,30 +463,30 @@ function StudioContent() {
 
               <button
                 onClick={validateForm}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-xs font-extrabold text-white shadow-lg shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-slate-900 hover:bg-indigo-900/30 border border-indigo-500/40 text-xs font-extrabold text-indigo-300 hover:text-indigo-200 shadow-md active:scale-[0.96] transition-all flex items-center gap-1.5"
               >
                 <HiCheck className="text-sm" /> Save Draft
               </button>
 
               <button
                 onClick={() => setOpen(true)}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/20 active:scale-[0.96] transition-all flex items-center gap-1.5"
+                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:brightness-110 text-xs font-extrabold text-white shadow-xl shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
               >
                 🚀 Publish
               </button>
             </div>
           </header>
 
-          {/* Main Builder Grid */}
-          <div className="flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 items-start">
-            {/* Left: Interactive Content Workspace */}
-            <div className="flex-1 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 space-y-7 shadow-xl w-full">
+          {/* Main Builder Workspace & Configuration Grid */}
+          <div className="flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 items-start relative w-full">
+            {/* Main Interactive Content Workspace */}
+            <div className="flex-1 min-w-0 w-full glass-panel-elevated rounded-3xl p-6 sm:p-8 space-y-7 shadow-2xl border border-white/10">
               {/* Primary Form Fields */}
               <div className="space-y-6">
                 <div className="p-1">
-                  <label htmlFor="title" className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
-                    <span>Page Title <span className="text-red-400">*</span></span>
-                    <span className="text-[10px] font-medium text-slate-500">Main Heading</span>
+                  <label htmlFor="title" className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                    <span>Page Title <span className="text-cyan-400">*</span></span>
+                    <span className="text-[10px] font-mono font-bold text-slate-500">Main Heading</span>
                   </label>
                   <input
                     id="title"
@@ -490,15 +494,15 @@ function StudioContent() {
                     type="text"
                     value={data.title}
                     onChange={onChange}
-                    placeholder="e.g. Modern AI Landing Page"
-                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/90 py-4 px-5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
+                    placeholder="e.g. Next-Gen AI Platform Page"
+                    className="block w-full rounded-2xl border border-white/10 bg-slate-950/80 py-3.5 px-5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all shadow-inner"
                   />
-                  {errors.title && <span className="text-red-400 text-xs mt-2 font-medium block">{errors.title}</span>}
+                  {errors.title && <span className="text-rose-400 text-xs mt-2 font-medium block">{errors.title}</span>}
                 </div>
 
                 <div className="p-1">
                   <label htmlFor="subText" className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">
-                    Subtitle / Summary
+                    Subtitle / Catchphrase Summary
                   </label>
                   <input
                     id="subText"
@@ -506,26 +510,26 @@ function StudioContent() {
                     type="text"
                     value={data.subText}
                     onChange={onChange}
-                    placeholder="Short catchphrase or introductory tagline"
-                    className="block w-full rounded-2xl border border-slate-800 bg-slate-950/90 py-3.5 px-5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
+                    placeholder="Short catchphrase or introductory tagline for search & social previews"
+                    className="block w-full rounded-2xl border border-white/10 bg-slate-950/80 py-3 px-5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all shadow-inner font-medium"
                   />
-                  {errors.subText && <span className="text-red-400 text-xs mt-2 font-medium block">{errors.subText}</span>}
+                  {errors.subText && <span className="text-rose-400 text-xs mt-2 font-medium block">{errors.subText}</span>}
                 </div>
               </div>
 
-              {/* Content Studio Workspace */}
-              <div className="border-t border-slate-800/80 pt-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3.5 mb-6 gap-2 overflow-x-auto">
+              {/* Content Studio Tabs & Canvas */}
+              <div className="border-t border-white/10 pt-6">
+                <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-4 mb-6 gap-3">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2 shrink-0">
-                    <HiPencilAlt className="text-indigo-400 text-base" /> Content Studio
+                    <HiPencilAlt className="text-cyan-400 text-base" /> Visual Workspace
                   </span>
-                  <div className="flex bg-slate-950/90 border border-slate-800/90 p-1 rounded-2xl text-xs font-semibold shrink-0 shadow-inner">
+                  <div className="flex bg-slate-950/90 border border-white/10 p-1 rounded-2xl text-xs font-semibold shrink-0 shadow-inner">
                     <button
                       type="button"
                       onClick={() => setContentTab("blocks")}
                       className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
                         contentTab === "blocks"
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
+                          ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -536,7 +540,7 @@ function StudioContent() {
                       onClick={() => setContentTab("seo")}
                       className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
                         contentTab === "seo"
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
+                          ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -547,7 +551,7 @@ function StudioContent() {
                       onClick={() => setContentTab("theme")}
                       className={`px-4 py-2 rounded-xl active:scale-[0.96] transition-all ${
                         contentTab === "theme"
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
+                          ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
@@ -585,170 +589,170 @@ function StudioContent() {
               </div>
             </div>
 
-            {/* Sidebar Configuration Panel */}
-            <div
-              className={`transition-all duration-300 bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-xl sticky top-6 self-start z-30 ${
-                isConfigCollapsed ? "w-full xl:w-16 p-3 flex flex-col items-center" : "w-full xl:w-80 p-5 space-y-5"
-              }`}
-            >
-              {isConfigCollapsed ? (
-                <button
-                  type="button"
-                  onClick={() => setIsConfigCollapsed(false)}
-                  className="flex flex-col items-center gap-2 text-slate-400 hover:text-white py-2 w-full group active:scale-[0.96] transition-all"
-                  title="Expand Configuration"
-                >
-                  <HiCog className="text-xl text-indigo-400 group-hover:rotate-45 transition-transform" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider hidden xl:block text-slate-500 group-hover:text-slate-300">
-                    Config
-                  </span>
-                  <HiChevronLeft className="text-sm mt-1" />
-                </button>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 className="text-sm font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
-                      <HiCog className="text-indigo-400 text-base" /> Configuration
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setIsConfigCollapsed(true)}
-                      className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white active:scale-[0.96] transition-all"
-                      title="Collapse Configuration"
-                    >
-                      <HiChevronRight className="text-base" />
-                    </button>
+            {/* Sidebar Configuration Panel (Fixed width xl:w-80, sticky right collapse state) */}
+            {isConfigCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setIsConfigCollapsed(false)}
+                className="fixed right-0 top-36 z-50 flex flex-col items-center gap-3 bg-[#0d1424]/95 border-l border-t border-b border-cyan-500/40 text-slate-300 hover:text-white p-3 rounded-l-2xl shadow-2xl backdrop-blur-2xl group active:scale-[0.97] transition-all hover:bg-slate-900 hover:border-cyan-400"
+                title="Expand Page Configuration Panel"
+              >
+                <div className="relative">
+                  <HiCog className="text-2xl text-cyan-400 group-hover:rotate-90 transition-transform duration-500" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 status-dot-active" />
+                </div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest font-mono text-cyan-300 [writing-mode:vertical-lr] rotate-180 py-1">
+                  CONFIG
+                </span>
+                <span className="text-[9px] font-mono font-bold text-slate-300 bg-cyan-500/20 border border-cyan-400/30 px-1.5 py-0.5 rounded-full">
+                  #{data.blocks?.length || 0}
+                </span>
+                <HiChevronLeft className="text-base text-cyan-400 group-hover:-translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <div className="w-full xl:w-80 glass-panel-elevated p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl sticky top-24 self-start space-y-5 z-30 transition-all shrink-0">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
+                    <HiCog className="text-cyan-400 text-base" /> Configuration
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfigCollapsed(true)}
+                    className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white active:scale-[0.96] transition-all border border-transparent hover:border-white/10"
+                    title="Collapse to Sticky Right Tab"
+                  >
+                    <HiChevronRight className="text-base" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  <div>
+                    <label htmlFor="url" className="block text-slate-300 font-extrabold mb-1.5 uppercase tracking-wider text-[11px]">
+                      URL Slug <span className="text-cyan-400">*</span>
+                    </label>
+                    <div className="relative rounded-xl shadow-sm">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-mono select-none">
+                        /
+                      </span>
+                      <input
+                        id="url"
+                        name="url"
+                        type="text"
+                        value={data.url}
+                        onChange={onChange}
+                        placeholder="landing-page"
+                        required
+                        className="block w-full pl-7 rounded-2xl border border-white/10 bg-slate-950/80 py-2.5 px-3 text-slate-200 font-mono text-xs focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
+                      />
+                    </div>
+                    {errors.url && <span className="text-rose-400 text-xs mt-1 block font-medium">{errors.url}</span>}
                   </div>
 
-                  <div className="space-y-4 text-xs">
-                    <div>
-                      <label htmlFor="url" className="block text-slate-400 font-bold mb-1.5">
-                        URL Slug <span className="text-red-400">*</span>
-                      </label>
-                      <div className="relative rounded-xl shadow-sm">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-mono select-none">
-                          /
-                        </span>
-                        <input
-                          id="url"
-                          name="url"
-                          type="text"
-                          value={data.url}
-                          onChange={onChange}
-                          placeholder="landing-page"
-                          required
-                          className="block w-full pl-7 rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-slate-200 font-mono text-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition-all"
-                        />
-                      </div>
-                      {errors.url && <span className="text-red-400 text-xs mt-1 block font-medium">{errors.url}</span>}
-                    </div>
+                  <div>
+                    <label htmlFor="author" className="block text-slate-300 font-extrabold mb-1.5 uppercase tracking-wider text-[11px]">
+                      Author
+                    </label>
+                    <input
+                      id="author"
+                      name="author"
+                      type="text"
+                      value={user}
+                      readOnly
+                      className="block w-full rounded-2xl border border-white/10 bg-slate-950/50 py-2.5 px-3 text-slate-400 cursor-not-allowed select-none font-medium text-xs"
+                    />
+                  </div>
 
-                    <div>
-                      <label htmlFor="author" className="block text-slate-400 font-bold mb-1.5">
-                        Author
-                      </label>
-                      <input
-                        id="author"
-                        name="author"
-                        type="text"
-                        value={user}
-                        readOnly
-                        className="block w-full rounded-xl border border-slate-800/80 bg-slate-950/70 py-2.5 px-3 text-slate-500 cursor-not-allowed select-none font-medium"
-                      />
-                    </div>
+                  <div className="flex items-center gap-3 pt-1">
+                    <input
+                      id="showAuthor"
+                      name="showAuthor"
+                      type="checkbox"
+                      checked={data.showAuthor}
+                      onChange={(e) => setData({ ...data, showAuthor: e.target.checked })}
+                      className="w-4 h-4 rounded border-white/10 bg-slate-950 text-cyan-400 focus:ring-cyan-400/30 cursor-pointer"
+                    />
+                    <label htmlFor="showAuthor" className="text-slate-300 font-semibold cursor-pointer select-none text-xs">
+                      Display Author Badge
+                    </label>
+                  </div>
 
-                    <div className="flex items-center gap-3 pt-2">
-                      <input
-                        id="showAuthor"
-                        name="showAuthor"
-                        type="checkbox"
-                        checked={data.showAuthor}
-                        onChange={(e) => setData({ ...data, showAuthor: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-950 cursor-pointer"
-                      />
-                      <label htmlFor="showAuthor" className="text-slate-300 font-semibold cursor-pointer select-none">
-                        Display Author Badge
+                  {/* Active Page Sections Overview */}
+                  <div className="pt-4 border-t border-white/10 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-slate-200 font-extrabold flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                        <HiSparkles className="text-cyan-400" /> Active Sections ({data.blocks ? data.blocks.length : 0})
                       </label>
                     </div>
 
-                    {/* Active Page Sections Overview */}
-                    <div className="pt-4 border-t border-slate-800 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-slate-300 font-extrabold flex items-center gap-1.5">
-                          <HiSparkles className="text-indigo-400" /> Active Sections ({data.blocks ? data.blocks.length : 0})
-                        </label>
-                      </div>
-
-                      {!data.blocks || data.blocks.length === 0 ? (
-                        <p className="text-[11px] text-slate-500 italic">No section blocks added yet.</p>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                          {data.blocks.map((b, i) => {
-                            const isSelected = selectedBlockIndex === i;
-                            return (
-                              <button
-                                key={b.id || i}
-                                type="button"
-                                onClick={() => setSelectedBlockIndex(i)}
-                                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-[11px] transition-all shadow-sm ${
-                                  isSelected
-                                    ? "bg-slate-900 border-indigo-500 ring-1 ring-indigo-500/30"
-                                    : "bg-slate-950 border-slate-800/80 hover:border-indigo-500/30 hover:bg-slate-900/90"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 truncate">
-                                  <span className="font-mono text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-1.5 py-0.5 rounded-md border border-indigo-500/25">
-                                    #{i + 1}
-                                  </span>
-                                  <span className="font-bold text-slate-200 uppercase truncate">
-                                    {b.type}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] font-medium text-slate-400 truncate max-w-[100px]">
-                                  {b.data?.title || b.data?.headline || "Block"}
+                    {!data.blocks || data.blocks.length === 0 ? (
+                      <p className="text-[11px] text-slate-500 italic">No section blocks added yet.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                        {data.blocks.map((b, i) => {
+                          const isSelected = selectedBlockIndex === i;
+                          return (
+                            <button
+                              key={b.id || i}
+                              type="button"
+                              onClick={() => setSelectedBlockIndex(i)}
+                              className={`w-full flex items-center justify-between p-2.5 rounded-2xl border text-[11px] transition-all shadow-sm ${
+                                isSelected
+                                  ? "bg-slate-900 border-cyan-400/60 ring-1 ring-cyan-400/30 text-white"
+                                  : "bg-slate-950/70 border-white/10 text-slate-300 hover:border-cyan-400/30 hover:bg-slate-900/90"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="font-mono text-[9px] font-bold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-md border border-cyan-500/30">
+                                  #{i + 1}
                                 </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Block Custom Styling & Spacing in Right Configuration Panel */}
-                    {data.blocks && data.blocks.length > 0 && data.blocks[selectedBlockIndex] && (
-                      <div className="pt-4 border-t border-slate-800 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-slate-200 font-extrabold flex items-center gap-1.5 text-xs uppercase tracking-wider">
-                            <HiColorSwatch className="text-indigo-400" />
-                            <span>Block Styling (#{selectedBlockIndex + 1})</span>
-                          </label>
-                          <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded-full border border-indigo-500/25 uppercase">
-                            {data.blocks[selectedBlockIndex]?.type}
-                          </span>
-                        </div>
-
-                        <BlockStyleEditor
-                          style={data.blocks[selectedBlockIndex]?.data?.style || {}}
-                          onChange={(newStyle) => {
-                            const updatedBlocks = [...data.blocks];
-                            if (updatedBlocks[selectedBlockIndex]) {
-                              updatedBlocks[selectedBlockIndex] = {
-                                ...updatedBlocks[selectedBlockIndex],
-                                data: {
-                                  ...updatedBlocks[selectedBlockIndex].data,
-                                  style: newStyle,
-                                },
-                              };
-                              setData({ ...data, blocks: updatedBlocks });
-                            }
-                          }}
-                        />
+                                <span className="font-bold uppercase truncate">
+                                  {b.type}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-medium text-slate-400 truncate max-w-[100px]">
+                                {b.data?.title || b.data?.headline || "Block"}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                </>
-              )}
-            </div>
+
+                  {/* Block Custom Styling & Spacing in Right Configuration Panel */}
+                  {data.blocks && data.blocks.length > 0 && data.blocks[selectedBlockIndex] && (
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-slate-200 font-extrabold flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                          <HiColorSwatch className="text-cyan-400" />
+                          <span>Block Styling (#{selectedBlockIndex + 1})</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-full border border-cyan-500/30 uppercase font-mono">
+                          {data.blocks[selectedBlockIndex]?.type}
+                        </span>
+                      </div>
+
+                      <BlockStyleEditor
+                        style={data.blocks[selectedBlockIndex]?.data?.style || {}}
+                        onChange={(newStyle) => {
+                          const updatedBlocks = [...data.blocks];
+                          if (updatedBlocks[selectedBlockIndex]) {
+                            updatedBlocks[selectedBlockIndex] = {
+                              ...updatedBlocks[selectedBlockIndex],
+                              data: {
+                                ...updatedBlocks[selectedBlockIndex].data,
+                                style: newStyle,
+                              },
+                            };
+                            setData({ ...data, blocks: updatedBlocks });
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { HiTrendingUp, HiUsers, HiLightningBolt, HiGlobeAlt } from "react-icons/hi";
 
 export default function StatsBlock({ data }) {
   const title = data?.title || "Proven Impact & Scale";
@@ -13,31 +12,33 @@ export default function StatsBlock({ data }) {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-          {title}
-        </h2>
-        {subtitle && <p className="mt-4 text-base sm:text-lg text-slate-400">{subtitle}</p>}
-      </div>
+    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans">
+      {title && (
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+            {title}
+          </h2>
+          {subtitle && <p className="text-sm sm:text-lg text-slate-300 font-normal">{subtitle}</p>}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            className="bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 text-center hover:border-indigo-500/30 transition-all duration-300 shadow-xl group hover:-translate-y-1"
+            className="glass-card rounded-3xl p-8 text-center hover:-translate-y-1 transition-all duration-300 shadow-xl group space-y-3 relative overflow-hidden"
           >
-            <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-200">
+            <div className="text-3xl sm:text-4xl group-hover:scale-110 transition-transform duration-300 inline-block">
               {stat.icon || "📊"}
             </div>
-            <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+            <div className="text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-indigo-300 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
               {stat.value}
             </div>
-            <div className="mt-2 text-sm font-bold text-slate-200 uppercase tracking-wider">
+            <div className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider">
               {stat.label}
             </div>
             {stat.description && (
-              <p className="mt-1 text-xs text-slate-400 leading-relaxed">{stat.description}</p>
+              <p className="text-xs text-slate-300 leading-relaxed font-normal">{stat.description}</p>
             )}
           </div>
         ))}

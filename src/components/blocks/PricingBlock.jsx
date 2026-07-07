@@ -55,32 +55,32 @@ export default function PricingBlock({ data }) {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans">
+      <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
+        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
           {title}
         </h2>
-        {subtitle && <p className="mt-4 text-base sm:text-lg text-slate-400">{subtitle}</p>}
+        {subtitle && <p className="text-sm sm:text-lg text-slate-300 font-normal">{subtitle}</p>}
 
         {/* Monthly / Annual Toggle */}
-        <div className="mt-8 flex justify-center items-center gap-3">
-          <span className={`text-xs sm:text-sm font-semibold ${!isAnnual ? "text-white" : "text-slate-400"}`}>
+        <div className="pt-4 flex justify-center items-center gap-3">
+          <span className={`text-xs sm:text-sm font-bold ${!isAnnual ? "text-white" : "text-slate-400"}`}>
             Monthly Billing
           </span>
           <button
             type="button"
             onClick={() => setIsAnnual(!isAnnual)}
-            className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-800 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-900 shadow-inner transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-indigo-500 shadow-md ring-0 transition duration-200 ease-in-out ${
+              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-indigo-500 shadow-md ring-0 transition duration-200 ease-in-out ${
                 isAnnual ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>
-          <span className={`text-xs sm:text-sm font-semibold flex items-center gap-1.5 ${isAnnual ? "text-white" : "text-slate-400"}`}>
+          <span className={`text-xs sm:text-sm font-bold flex items-center gap-2 ${isAnnual ? "text-white" : "text-slate-400"}`}>
             Annual Billing
-            <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wider">
+            <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-wider">
               Save 20%
             </span>
           </span>
@@ -96,32 +96,32 @@ export default function PricingBlock({ data }) {
               key={idx}
               className={`relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-300 ${
                 plan.popular
-                  ? "bg-slate-900 border-2 border-indigo-500/80 shadow-2xl shadow-indigo-500/20 scale-105 z-10"
-                  : "bg-slate-900/60 border border-slate-800 hover:border-slate-700"
+                  ? "bg-[#131a2e]/90 border-2 border-indigo-500/80 shadow-2xl shadow-indigo-500/25 scale-105 z-10 backdrop-blur-xl"
+                  : "glass-card hover:border-slate-700"
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[11px] font-extrabold uppercase px-3.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 text-white text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-lg flex items-center gap-1.5 border border-indigo-400/40">
                   <HiSparkles /> Most Popular
                 </div>
               )}
 
               <div>
-                <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                <p className="mt-2 text-xs text-slate-400 min-h-[36px]">{plan.description}</p>
+                <h3 className="text-2xl font-bold text-white tracking-tight">{plan.name}</h3>
+                <p className="mt-2 text-xs text-slate-300 min-h-[36px] font-normal leading-relaxed">{plan.description}</p>
 
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-white">${price}</span>
-                  <span className="text-xs text-slate-400">/ month</span>
+                <div className="mt-6 flex items-baseline gap-1.5">
+                  <span className="text-4xl sm:text-5xl font-black text-white">${price}</span>
+                  <span className="text-xs font-semibold text-slate-400">/ month</span>
                 </div>
 
-                <ul className="mt-8 space-y-3 text-xs text-slate-300">
+                <ul className="mt-8 space-y-3.5 text-xs text-slate-200">
                   {plan.features?.map((feat, fIdx) => (
-                    <li key={fIdx} className="flex items-center gap-2.5">
-                      <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-400 shrink-0">
+                    <li key={fIdx} className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-400 shrink-0 border border-emerald-500/30">
                         <HiCheck className="w-3 h-3" />
                       </span>
-                      <span>{feat}</span>
+                      <span className="font-medium">{feat}</span>
                     </li>
                   ))}
                 </ul>
@@ -130,10 +130,10 @@ export default function PricingBlock({ data }) {
               <div className="mt-8">
                 <button
                   type="button"
-                  className={`w-full py-3 px-4 rounded-2xl text-xs font-bold transition-all active:scale-[0.96] shadow-md ${
+                  className={`w-full py-3.5 px-5 rounded-2xl text-xs font-extrabold transition-all active:scale-[0.96] shadow-lg ${
                     plan.popular
-                      ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
-                      : "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white shadow-indigo-600/30"
+                      : "bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/80"
                   }`}
                 >
                   {plan.buttonText || "Choose Plan"}
