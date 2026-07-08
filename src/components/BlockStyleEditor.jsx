@@ -1,37 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { HiColorSwatch, HiAdjustments, HiChevronDown, HiChevronUp } from "react-icons/hi";
-
-const FONT_STYLES = [
-  { id: "sans", label: "Sans-Serif" },
-  { id: "serif", label: "Serif" },
-  { id: "mono", label: "Monospace" },
-  { id: "display", label: "Display Bold" },
-];
-
-const FONT_SIZES = [
-  { id: "sm", label: "Small" },
-  { id: "base", label: "Medium" },
-  { id: "lg", label: "Large" },
-  { id: "xl", label: "Extra Large" },
-];
-
-const SPACING_OPTIONS = [
-  { id: "compact", label: "Compact Padding" },
-  { id: "normal", label: "Standard Padding" },
-  { id: "spacious", label: "Spacious Padding" },
-  { id: "hero", label: "Hero Padding" },
-];
-
-const QUICK_COLORS = [
-  { name: "Default", bg: "", text: "" },
-  { name: "Slate", bg: "#0f172a", text: "#f8fafc" },
-  { name: "Black", bg: "#000000", text: "#ffffff" },
-  { name: "Emerald", bg: "#064e3b", text: "#ecfdf5" },
-  { name: "Crimson", bg: "#450a0a", text: "#fef2f2" },
-  { name: "Ocean", bg: "#0c4a6e", text: "#f0f9ff" },
-  { name: "White", bg: "#ffffff", text: "#0f172a" },
-];
+import { HiColorSwatch, HiChevronDown, HiChevronUp } from "react-icons/hi";
+import {
+  COLOR_SCHEME_PRESETS,
+  FONT_STYLE_OPTIONS,
+  FONT_SIZE_OPTIONS,
+  SPACING_OPTIONS,
+} from "@/config/styleConfig";
 
 export default function BlockStyleEditor({ style = {}, onChange }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -39,6 +14,17 @@ export default function BlockStyleEditor({ style = {}, onChange }) {
   const updateStyle = (key, val) => {
     onChange({ ...style, [key]: val });
   };
+
+  const handlePresetChange = (e) => {
+    const selected = COLOR_SCHEME_PRESETS.find((c) => c.id === e.target.value);
+    if (selected) {
+      onChange({ ...style, bgColor: selected.bg, textColor: selected.text });
+    }
+  };
+
+  const matchedPreset = COLOR_SCHEME_PRESETS.find(
+    (c) => c.bg === style.bgColor && c.text === style.textColor
+  );
 
   return (
     <div className="border border-slate-800/80 rounded-2xl bg-slate-950/60 overflow-hidden mt-4 text-xs">
@@ -61,67 +47,65 @@ export default function BlockStyleEditor({ style = {}, onChange }) {
 
       {isExpanded && (
         <div className="p-4 space-y-4 border-t border-slate-800/80">
-          {/* Quick Swatches */}
+          {/* Preset Color Schemes Dropdown */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 mb-2">Preset Color Schemes</label>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_COLORS.map((c, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    updateStyle("bgColor", c.bg);
-                    updateStyle("textColor", c.text);
-                  }}
-                  className="px-2.5 py-1 rounded-xl border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1.5 active:scale-[0.96] transition"
-                >
-                  {c.bg ? (
-                    <span className="w-3 h-3 rounded-full border border-slate-700" style={{ backgroundColor: c.bg }} />
-                  ) : (
-                    <span className="w-3 h-3 rounded-full border border-slate-700 bg-slate-800" />
-                  )}
-                  <span>{c.name}</span>
-                </button>
+            <label className="block text-[11px] font-bold text-slate-400 mb-1">
+              Preset Color Scheme
+            </label>
+            <select
+              value={matchedPreset ? matchedPreset.id : "custom"}
+              onChange={handlePresetChange}
+              className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2 px-3 text-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="custom">Custom Color Scheme</option>
+              {COLOR_SCHEME_PRESETS.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* Color Pickers */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Block Background</label>
+          {/* Color Pickers: Text Color and Block Bg in a Row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                Block Background
+              </label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={style.bgColor || "#0f172a"}
                   onChange={(e) => updateStyle("bgColor", e.target.value)}
-                  className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer"
+                  className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer shrink-0"
                 />
                 <input
                   type="text"
                   value={style.bgColor || ""}
                   onChange={(e) => updateStyle("bgColor", e.target.value)}
                   placeholder="e.g. #0f172a"
-                  className="flex-1 font-mono text-[11px] rounded-xl border border-slate-800 bg-slate-900 py-1.5 px-3 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full font-mono text-[11px] rounded-xl border border-slate-800 bg-slate-900 py-1.5 px-3 text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Block Text Color</label>
+            <div className="flex-1">
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                Block Text Color
+              </label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={style.textColor || "#f8fafc"}
                   onChange={(e) => updateStyle("textColor", e.target.value)}
-                  className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer"
+                  className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer shrink-0"
                 />
                 <input
                   type="text"
                   value={style.textColor || ""}
                   onChange={(e) => updateStyle("textColor", e.target.value)}
                   placeholder="e.g. #f8fafc"
-                  className="flex-1 font-mono text-[11px] rounded-xl border border-slate-800 bg-slate-900 py-1.5 px-3 text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full font-mono text-[11px] rounded-xl border border-slate-800 bg-slate-900 py-1.5 px-3 text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -137,7 +121,7 @@ export default function BlockStyleEditor({ style = {}, onChange }) {
                 className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2 px-3 text-white focus:outline-none focus:border-indigo-500"
               >
                 <option value="">Default (Inherit Page)</option>
-                {FONT_STYLES.map((f) => (
+                {FONT_STYLE_OPTIONS.map((f) => (
                   <option key={f.id} value={f.id}>{f.label}</option>
                 ))}
               </select>
@@ -151,7 +135,7 @@ export default function BlockStyleEditor({ style = {}, onChange }) {
                 className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2 px-3 text-white focus:outline-none focus:border-indigo-500"
               >
                 <option value="">Default (Inherit Page)</option>
-                {FONT_SIZES.map((s) => (
+                {FONT_SIZE_OPTIONS.map((s) => (
                   <option key={s.id} value={s.id}>{s.label}</option>
                 ))}
               </select>

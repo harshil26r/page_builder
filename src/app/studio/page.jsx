@@ -939,7 +939,17 @@ function StudioContent() {
 
                         <div>
                           {data.blocks && data.blocks.length > 0 ? (
-                            <BlockRenderer blocks={data.blocks} />
+                            <BlockRenderer
+                              blocks={data.blocks}
+                              pageStyle={{
+                                bgColor: data.bgColor,
+                                textColor: data.textColor,
+                                fontStyle: data.fontStyle,
+                                fontSize: data.fontSize,
+                                spacing: data.spacing,
+                                customCss: data.customCss,
+                              }}
+                            />
                           ) : (
                             <MarkdownRender source={data.body} />
                           )}

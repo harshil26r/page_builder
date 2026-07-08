@@ -2,7 +2,7 @@
 import React from "react";
 import { HiSparkles, HiArrowRight } from "react-icons/hi";
 
-export default function HeroBlock({ data = {} }) {
+export default function HeroBlock({ data = {}, style = {} }) {
   const {
     title = "Build Breathtaking Pages",
     subtitle = "The ultra-fast, mobile-first page builder for modern creators.",
@@ -12,22 +12,27 @@ export default function HeroBlock({ data = {} }) {
     imageAlign = "right",
   } = data;
 
+  console.log(style)
+
   const isBgImage = imageAlign === "background" && imageUrl;
+
+  const sectionStyle = {};
+  if (style.bgColor) sectionStyle.backgroundColor = style.bgColor;
+  if (style.textColor) sectionStyle.color = style.textColor;
+  if (isBgImage) {
+    sectionStyle.backgroundImage = `linear-gradient(to bottom, rgba(8, 11, 17, 0.85), rgba(8, 11, 17, 0.95)), url(${imageUrl})`;
+  }
 
   return (
     <section
       className={`relative overflow-hidden rounded-3xl p-6 sm:p-12 lg:p-16 border border-white/10 shadow-2xl transition-all ${
         isBgImage
           ? "bg-cover bg-center text-white"
+          : style.bgColor
+          ? ""
           : "bg-gradient-to-b from-[#0d1322] via-[#0f172a] to-[#080b11]"
       }`}
-      style={
-        isBgImage
-          ? {
-              backgroundImage: `linear-gradient(to bottom, rgba(8, 11, 17, 0.85), rgba(8, 11, 17, 0.95)), url(${imageUrl})`,
-            }
-          : {}
-      }
+      style={sectionStyle}
     >
       {/* Ambient Radial Backlights */}
       {!isBgImage && (

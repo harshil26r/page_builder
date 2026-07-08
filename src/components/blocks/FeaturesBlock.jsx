@@ -1,9 +1,13 @@
 "use client";
 import React, { useState } from "react";
 
-export default function FeaturesBlock({ data = {} }) {
+export default function FeaturesBlock({ data = {}, style = {} }) {
   const { title = "Why Choose Us", subtitle = "Core features engineered for speed", items = [] } = data;
   const [activeSlide, setActiveSlide] = useState(0);
+
+  const sectionStyle = {};
+  if (style.bgColor) sectionStyle.backgroundColor = style.bgColor;
+  if (style.textColor) sectionStyle.color = style.textColor;
 
   const handleScroll = (e) => {
     const container = e.target;
@@ -16,7 +20,7 @@ export default function FeaturesBlock({ data = {} }) {
   };
 
   return (
-    <section className="py-6 sm:py-10 space-y-8 font-sans">
+    <section className="py-6 sm:py-10 space-y-8 font-sans rounded-3xl p-4 transition-all" style={sectionStyle}>
       {title && (
         <div className="text-center space-y-3 max-w-2xl mx-auto px-4">
           <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">

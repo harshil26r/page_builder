@@ -226,6 +226,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [draggedAddType, setDraggedAddType] = useState(null); // ponytail: React state fallback if browser strips dataTransfer payload
 
   const addBlock = (blockType) => {
     const blockDef = BLOCK_TYPES.find((b) => b.type === blockType);
@@ -272,10 +273,11 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   const handleDragStart = (e, index) => {
     e.stopPropagation();
     setDraggedIndex(index);
+    setActiveBlockIndex(null); // ponytail: collapse blocks when drag starts
     e.dataTransfer.effectAllowed = "move";
     const payload = JSON.stringify({ action: "reorder_block", index });
     e.dataTransfer.setData("application/json", payload);
-    e.dataTransfer.setData("text/plain", String(index));
+    e.dataTransfer.setData("text/plain", payload);
   };
 
   const handleDragOver = (e, index) => {
@@ -289,22 +291,28 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOverIndex(null);
-    setDraggedIndex(null);
-
-    const jsonRaw = e.dataTransfer.getData("application/json");
-    const textRaw = e.dataTransfer.getData("text/plain");
 
     let payload = null;
+    const jsonRaw = e.dataTransfer.getData("application/json") || e.dataTransfer.getData("text/plain");
     if (jsonRaw) {
       try {
         payload = JSON.parse(jsonRaw);
-      } catch (err) {
-        console.error("JSON drag payload parse error:", err);
+      } catch {
+        /* ignore */
       }
-    } else if (textRaw && !isNaN(parseInt(textRaw, 10))) {
-      payload = { action: "reorder_block", index: parseInt(textRaw, 10) };
     }
+
+    if (!payload) {
+      if (draggedAddType) {
+        payload = { action: "add_block", type: draggedAddType };
+      } else if (typeof draggedIndex === "number" && draggedIndex !== null) {
+        payload = { action: "reorder_block", index: draggedIndex };
+      }
+    }
+
+    setDragOverIndex(null);
+    setDraggedIndex(null);
+    setDraggedAddType(null);
 
     if (!payload) return;
 
@@ -317,18 +325,18 @@ export default function BlockBuilder({ blocks = [], onChange }) {
         data: JSON.parse(JSON.stringify(blockDef.defaultData)),
       };
       const updated = [...blocks];
-      const insertAt = dropIndex !== null ? dropIndex : updated.length;
+      const insertAt = dropIndex !== null && dropIndex !== undefined ? dropIndex : updated.length;
       updated.splice(insertAt, 0, newBlock);
       onChange(updated);
-      setActiveBlockIndex(insertAt);
+      setActiveBlockIndex(null); // ponytail: keep collapsed on drop
     } else if (payload.action === "reorder_block" && typeof payload.index === "number") {
       const fromIndex = payload.index;
-      if (fromIndex < 0 || fromIndex >= blocks.length || dropIndex === null || fromIndex === dropIndex) return;
+      if (fromIndex < 0 || fromIndex >= blocks.length || dropIndex === null || dropIndex === undefined || fromIndex === dropIndex) return;
       const updated = [...blocks];
       const [moved] = updated.splice(fromIndex, 1);
       updated.splice(dropIndex, 0, moved);
       onChange(updated);
-      setActiveBlockIndex(dropIndex);
+      setActiveBlockIndex(null); // ponytail: keep collapsed on drop
     }
   };
 
@@ -374,8 +382,15 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                 key={b.type}
                 draggable
                 onDragStart={(e) => {
-                  e.dataTransfer.setData("application/json", JSON.stringify({ action: "add_block", type: b.type }));
+                  setActiveBlockIndex(null); // ponytail: collapse blocks when dragging
+                  setDraggedAddType(b.type);
+                  const payload = JSON.stringify({ action: "add_block", type: b.type });
+                  e.dataTransfer.setData("application/json", payload);
+                  e.dataTransfer.setData("text/plain", payload);
                   e.dataTransfer.effectAllowed = "copy";
+                }}
+                onDragEnd={() => {
+                  setDraggedAddType(null);
                 }}
                 onClick={() => addBlock(b.type)}
                 className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none"
@@ -449,6 +464,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                 onDragEnd={() => {
                   setDraggedIndex(null);
                   setDragOverIndex(null);
+                  setDraggedAddType(null);
                 }}
                 className={`group border rounded-2xl transition-all duration-200 overflow-hidden ${
                   isDragging ? "opacity-30 border-dashed border-indigo-500" : ""
