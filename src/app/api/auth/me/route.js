@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     await dbConnect();
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const rawSid = cookieStore.get("sid")?.value;
     const sid = rawSid ? unsignCookie(rawSid) : null;
 

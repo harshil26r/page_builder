@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function POST() {
   try {
     await dbConnect();
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const rawSid = cookieStore.get("sid")?.value;
     const sid = rawSid ? unsignCookie(rawSid) : null;
 

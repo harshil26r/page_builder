@@ -30,7 +30,7 @@ export async function PUT(request) {
 
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const rawSid = cookieStore.get("sid")?.value;
     const sid = rawSid ? unsignCookie(rawSid) : null;
     if (!sid) {
