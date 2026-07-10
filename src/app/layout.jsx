@@ -20,6 +20,12 @@ export const metadata = {
   description: "Craft, style, and publish high-performance glassmorphic web pages with visual blocks.",
 };
 
+export const viewport = {
+  themeColor: "#080b11",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${plusJakarta.variable} ${jetbrainsMono.variable} dark`}>
