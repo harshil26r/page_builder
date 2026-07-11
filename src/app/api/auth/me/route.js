@@ -2,6 +2,7 @@ import { dbConnect } from "@/middleware/mongoConnect";
 import Session from "@/models/session";
 import User from "@/models/user";
 import { unsignCookie } from "@/middleware/cookieSigner";
+import { isValidObjectId } from "@/lib/validateObjectId";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -14,7 +15,7 @@ export async function GET() {
     const rawSid = cookieStore.get("sid")?.value;
     const sid = rawSid ? unsignCookie(rawSid) : null;
 
-    if (!sid) {
+    if (!isValidObjectId(sid)) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 });
     }
 

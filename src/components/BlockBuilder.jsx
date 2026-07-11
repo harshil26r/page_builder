@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import RichTextEditor from "@/components/RichTextEditor";
 import BlockStyleEditor from "@/components/BlockStyleEditor";
 import {
@@ -228,6 +228,18 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [draggedAddType, setDraggedAddType] = useState(null); // ponytail: React state fallback if browser strips dataTransfer payload
 
+  // Tracks nested-element enter/leave counts per drop-zone index so the
+  // "drop here" indicator doesn't flicker or get stuck when the pointer
+  // crosses child elements inside a zone (buttons, icons, text, etc).
+  const dragCounterRef = useRef({});
+
+  const resetDragState = () => {
+    dragCounterRef.current = {};
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    setDraggedAddType(null);
+  };
+
   const addBlock = (blockType) => {
     const blockDef = BLOCK_TYPES.find((b) => b.type === blockType);
     if (!blockDef) return;
@@ -269,28 +281,73 @@ export default function BlockBuilder({ blocks = [], onChange }) {
     setActiveBlockIndex(targetIndex);
   };
 
+  // Ensure every block has a stable unique ID for React keys and DnD engine
+  const safeBlocks = blocks.map((b, idx) => ({
+    ...b,
+    id: b.id || b._id || `block_stab_${idx}_${b.type}`,
+  }));
+
+  // ---------------------------------------------------------------------
   // Drag and Drop Event Handlers
-  const handleDragStart = (e, index) => {
+  //
+  // Design notes on the fixes vs. the previous version:
+  // 1. `dragOverIndex` is now updated on dragenter/dragleave (with a
+  //    per-zone counter) instead of on every dragover event. dragover
+  //    fires continuously (dozens of times/sec) which caused needless
+  //    re-renders and made the "drop here" indicator flicker.
+  // 2. Every draggable element now calls `resetDragState` on dragend as a
+  //    failsafe, so a cancelled drag (dropped outside any valid zone,
+  //    or Escape pressed) can't leave a stuck "drop here" indicator.
+  // 3. The reorder math had a no-op ternary that always inserted at
+  //    `dropIndex` regardless of direction. Once the dragged item is
+  //    spliced out of the array, every index after it shifts down by
+  //    one — so moving an item *forward* in the list must insert at
+  //    `dropIndex - 1`, not `dropIndex`. That's the main bug that made
+  //    reordering land in the wrong slot.
+  // ---------------------------------------------------------------------
+
+  const handleDragStart = (e, index, blockId) => {
     e.stopPropagation();
+    dragCounterRef.current = {};
     setDraggedIndex(index);
+    setDragOverIndex(null);
     setActiveBlockIndex(null); // ponytail: collapse blocks when drag starts
     e.dataTransfer.effectAllowed = "move";
-    const payload = JSON.stringify({ action: "reorder_block", index });
+    const payload = JSON.stringify({ action: "reorder_block", index, blockId });
     e.dataTransfer.setData("application/json", payload);
     e.dataTransfer.setData("text/plain", payload);
   };
 
-  const handleDragOver = (e, index) => {
+  // Only handles preventDefault + cursor feedback; no state updates here
+  // (dragover fires continuously, so state changes belong in enter/leave).
+  const handleDragOver = (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = draggedAddType ? "copy" : "move";
+  };
+
+  const handleDragEnter = (e, index) => {
+    e.preventDefault();
+    const counts = dragCounterRef.current;
+    counts[index] = (counts[index] || 0) + 1;
     if (dragOverIndex !== index) {
       setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e, index) => {
+    const counts = dragCounterRef.current;
+    counts[index] = (counts[index] || 1) - 1;
+    if (counts[index] <= 0) {
+      counts[index] = 0;
+      setDragOverIndex((current) => (current === index ? null : current));
     }
   };
 
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     e.stopPropagation();
+
+    dragCounterRef.current = {};
 
     let payload = null;
     const jsonRaw = e.dataTransfer.getData("application/json") || e.dataTransfer.getData("text/plain");
@@ -324,17 +381,25 @@ export default function BlockBuilder({ blocks = [], onChange }) {
         type: payload.type,
         data: JSON.parse(JSON.stringify(blockDef.defaultData)),
       };
-      const updated = [...blocks];
-      const insertAt = dropIndex !== null && dropIndex !== undefined ? dropIndex : updated.length;
+      const updated = [...safeBlocks];
+      const insertAt = dropIndex !== null && dropIndex !== undefined ? Math.min(dropIndex, updated.length) : updated.length;
       updated.splice(insertAt, 0, newBlock);
       onChange(updated);
       setActiveBlockIndex(null); // ponytail: keep collapsed on drop
-    } else if (payload.action === "reorder_block" && typeof payload.index === "number") {
-      const fromIndex = payload.index;
-      if (fromIndex < 0 || fromIndex >= blocks.length || dropIndex === null || dropIndex === undefined || fromIndex === dropIndex) return;
-      const updated = [...blocks];
+    } else if (payload.action === "reorder_block") {
+      let fromIndex = payload.index;
+      if (payload.blockId) {
+        const found = safeBlocks.findIndex((b) => b.id === payload.blockId);
+        if (found !== -1) fromIndex = found;
+      }
+      if (fromIndex < 0 || fromIndex >= safeBlocks.length || dropIndex === null || dropIndex === undefined || fromIndex === dropIndex) return;
+      const updated = [...safeBlocks];
       const [moved] = updated.splice(fromIndex, 1);
-      updated.splice(dropIndex, 0, moved);
+      // Fixed: previously `dropIndex > fromIndex ? dropIndex : dropIndex`
+      // (a no-op). After removing the source item, everything after it
+      // shifts down by one, so a forward move must target dropIndex - 1.
+      const targetIndex = dropIndex > fromIndex ? dropIndex - 1 : dropIndex;
+      updated.splice(targetIndex, 0, moved);
       onChange(updated);
       setActiveBlockIndex(null); // ponytail: keep collapsed on drop
     }
@@ -382,6 +447,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                 key={b.type}
                 draggable
                 onDragStart={(e) => {
+                  dragCounterRef.current = {};
                   setActiveBlockIndex(null); // ponytail: collapse blocks when dragging
                   setDraggedAddType(b.type);
                   const payload = JSON.stringify({ action: "add_block", type: b.type });
@@ -389,9 +455,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                   e.dataTransfer.setData("text/plain", payload);
                   e.dataTransfer.effectAllowed = "copy";
                 }}
-                onDragEnd={() => {
-                  setDraggedAddType(null);
-                }}
+                onDragEnd={resetDragState}
                 onClick={() => addBlock(b.type)}
                 className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none"
               >
@@ -422,10 +486,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
       {/* Active Added Blocks List with HTML5 Drag & Drop */}
       {blocks.length === 0 ? (
         <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-          }}
+          onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 0)}
           className="text-center py-14 px-4 border-2 border-dashed border-slate-800/80 hover:border-indigo-500/60 rounded-2xl bg-slate-950/40 text-slate-500 space-y-3 transition"
         >
@@ -447,7 +508,7 @@ export default function BlockBuilder({ blocks = [], onChange }) {
             </span>
           </div>
 
-          {blocks.map((block, idx) => {
+          {safeBlocks.map((block, idx) => {
             const blockDef = BLOCK_TYPES.find((b) => b.type === block.type) || BLOCK_TYPES[0];
             const Icon = blockDef.icon;
             const isOpen = activeBlockIndex === idx;
@@ -455,37 +516,35 @@ export default function BlockBuilder({ blocks = [], onChange }) {
             const isDragOver = dragOverIndex === idx;
 
             return (
-              <div
-                key={block.id || idx}
-                draggable
-                onDragStart={(e) => handleDragStart(e, idx)}
-                onDragOver={(e) => handleDragOver(e, idx)}
-                onDrop={(e) => handleDrop(e, idx)}
-                onDragEnd={() => {
-                  setDraggedIndex(null);
-                  setDragOverIndex(null);
-                  setDraggedAddType(null);
-                }}
-                className={`group border rounded-2xl transition-all duration-200 overflow-hidden ${
-                  isDragging ? "opacity-30 border-dashed border-indigo-500" : ""
-                } ${
-                  isDragOver ? "border-indigo-500 scale-[1.01] bg-indigo-500/10" : ""
-                } ${
-                  isOpen
-                    ? "border-indigo-500/80 bg-slate-900 shadow-2xl shadow-indigo-500/10 ring-1 ring-indigo-500/30"
-                    : "border-slate-800/90 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900/60"
-                }`}
-              >
-                {/* Block Header Control Bar with Drag Handle */}
-                <div className="flex items-center justify-between p-3.5 gap-2">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {/* Drag Grip Handle */}
-                    <div
-                      className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition"
-                      title="Drag to reorder"
-                    >
-                      <HiMenu className="w-4 h-4" />
-                    </div>
+              <React.Fragment key={block.id}>
+                <div
+                  onDragEnter={(e) => handleDragEnter(e, idx)}
+                  onDragLeave={(e) => handleDragLeave(e, idx)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  className={`group border rounded-2xl transition-all duration-200 overflow-hidden ${
+                    isDragging ? "opacity-30 border-dashed border-indigo-500" : ""
+                  } ${
+                    isDragOver ? "border-indigo-500 scale-[1.01] bg-indigo-500/10 ring-2 ring-indigo-500/40" : ""
+                  } ${
+                    isOpen
+                      ? "border-indigo-500/80 bg-slate-900 shadow-2xl shadow-indigo-500/10 ring-1 ring-indigo-500/30"
+                      : "border-slate-800/90 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900/60"
+                  }`}
+                >
+                  {/* Block Header Control Bar with Drag Handle */}
+                  <div className="flex items-center justify-between p-3.5 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {/* Drag Grip Handle - Dragging enabled exclusively on handle icon */}
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx, block.id)}
+                        onDragEnd={resetDragState}
+                        className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 bg-slate-900/80 transition"
+                        title="Drag handle to reorder block"
+                      >
+                        <HiMenu className="w-4 h-4 text-indigo-400" />
+                      </div>
 
                     <button
                       type="button"
@@ -1122,9 +1181,25 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                   </div>
                 )}
               </div>
-            );
-          })}
+            </React.Fragment>
+          );
+        })}
+
+        {/* Bottom Append Target Zone for Drag & Drop */}
+        <div
+          onDragEnter={(e) => handleDragEnter(e, blocks.length)}
+          onDragLeave={(e) => handleDragLeave(e, blocks.length)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, blocks.length)}
+          className={`py-3.5 px-4 rounded-2xl border-2 border-dashed transition-all flex items-center justify-center text-xs font-bold gap-2 ${
+            dragOverIndex === blocks.length
+              ? "border-indigo-500 bg-indigo-500/20 text-indigo-300 scale-[1.01] shadow-xl animate-pulse"
+              : "border-slate-800/80 bg-slate-950/40 text-slate-500 hover:border-slate-700 hover:text-slate-400"
+          }`}
+        >
+          <span>+ Drag & Drop here to append block at end of layout</span>
         </div>
+      </div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
+import { isValidObjectId } from "@/lib/validateObjectId";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -7,6 +8,10 @@ export async function GET(request, { params }) {
     await dbConnect();
     const resolvedParams = await params;
     const id = resolvedParams.id;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: "Invalid blog ID format" }, { status: 400 });
+    }
 
     const blog = await Blog.findById(id);
 

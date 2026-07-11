@@ -4,6 +4,7 @@ import User from "@/models/user";
 import Session from "@/models/session";
 import moment from "moment";
 import { unsignCookie } from "@/middleware/cookieSigner";
+import { isValidObjectId } from "@/lib/validateObjectId";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -28,12 +29,16 @@ export async function PUT(request) {
       ogImage,
     } = body;
 
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: "Invalid blog ID format" }, { status: 400 });
+    }
+
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
     const cookieStore = await cookies();
     const rawSid = cookieStore.get("sid")?.value;
     const sid = rawSid ? unsignCookie(rawSid) : null;
-    if (!sid) {
+    if (!isValidObjectId(sid)) {
       return NextResponse.json({ success: false, error: "Unauthorized: Please login first" }, { status: 401 });
     }
 
@@ -59,8 +64,6 @@ export async function PUT(request) {
         url: normalizedUrl,
         showAuthor,
         status,
-        modifiedBy: user.username,
-        modifiedAt: formattedDate,
         publishTime,
         publishDate,
         blocks,

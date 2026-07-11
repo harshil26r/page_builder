@@ -1,5 +1,6 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
+import { isValidObjectId } from "@/lib/validateObjectId";
 import { NextResponse } from "next/server";
 
 export async function DELETE(request) {
@@ -7,6 +8,10 @@ export async function DELETE(request) {
     await dbConnect();
     const body = await request.json();
     const { id } = body;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: "Invalid blog ID format" }, { status: 400 });
+    }
 
     const deletedBlog = await Blog.findByIdAndDelete(id);
 

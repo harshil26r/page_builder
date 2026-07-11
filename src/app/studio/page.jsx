@@ -79,7 +79,7 @@ function StudioContent() {
         },
       });
       const response = await res.json();
-      if (response && response.blog) {
+      if (response && response.success && response.blog) {
         setCurrentBlogId(response.blog._id);
         setCurrentBlog(response.blog);
         setData({
@@ -104,9 +104,14 @@ function StudioContent() {
           spacing: response.blog.spacing || "normal",
           customCss: response.blog.customCss || "",
         });
+      } else {
+        toast.error(response?.error || "Invalid page ID");
+        router.push("/studio");
       }
     } catch (err) {
       console.error("Error fetching blog:", err);
+      toast.error("Failed to load page data");
+      router.push("/studio");
     }
   };
 
