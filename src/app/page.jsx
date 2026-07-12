@@ -129,7 +129,7 @@ export default function Home() {
     <div className="flex h-screen bg-[#070a12] bg-grid-pattern text-slate-100 font-sans overflow-hidden">
       <Sidebar />
 
-      <main className="flex flex-col flex-1 h-screen overflow-y-auto custom-scrollbar relative">
+      <main className="flex flex-col flex-1 pl-20 h-screen overflow-y-auto custom-scrollbar relative">
         {/* Subtle Ambient Glow */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-10 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />

@@ -22,25 +22,23 @@ async function sendPublishEmail(blog) {
           <h2 style="color: #10B981; text-align: center;">Your Page is Now Live!</h2>
           <p>Hello,</p>
           <p>Great news! Your scheduled page <strong>"${blog.title}"</strong> has been automatically published and is now live on the site.</p>
-          
           <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; border-left: 4px solid #10B981; margin: 20px 0;">
             <p style="margin: 0 0 10px 0; font-weight: bold;">Page Details:</p>
             <p style="margin: 0 0 5px 0;"><strong>Title:</strong> ${blog.title}</p>
             <p style="margin: 0 0 5px 0;"><strong>URL Path:</strong> <a href="${blog.url}" style="color: #4F46E5; text-decoration: underline;">${blog.url}</a></p>
             <p style="margin: 0;"><strong>Published At:</strong> ${new Date().toLocaleString()}</p>
           </div>
-
           <p>You can view your published page directly by clicking the link above.</p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #9ca3af; text-align: center;">© 2026 Rapid Page Builder. All rights reserved.</p>
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">&copy; 2026 Rapid Page Builder. All rights reserved.</p>
         </div>
       `,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`[Publisher] Notification email sent to ${blog.authorEmail} for "${blog.title}"`);
+    console.log(`[Publisher] Email sent to ${blog.authorEmail} for "${blog.title}"`);
   } catch (error) {
-    console.error("[Publisher] Error sending publication email:", error);
+    console.error("[Publisher] Error sending email:", error);
   }
 }
 
@@ -49,40 +47,23 @@ export async function checkAndPublishScheduled() {
     await dbConnect();
     const now = new Date();
 
-    // Find all scheduled blogs
-    const scheduledBlogs = await Blog.find({ status: "scheduled" });
-    if (scheduledBlogs.length === 0) return;
+    // Single query: find all scheduled blogs whose scheduledAt has passed
+    const blogsToPublish = await Blog.find({
+      status: "scheduled",
+      scheduledAt: { $lte: now },
+    });
 
-    console.log(`[Publisher] Found ${scheduledBlogs.length} scheduled page(s). Checking publish status...`);
+    if (blogsToPublish.length === 0) return;
 
-    for (const blog of scheduledBlogs) {
-      if (blog.publishTime && blog.publishDate) {
-        // publishTime contains date (YYYY-MM-DD), publishDate contains time (HH:MM)
-        const scheduledDateTimeStr = `${blog.publishTime}T${blog.publishDate}`;
-        const scheduledTime = new Date(scheduledDateTimeStr);
+    console.log(`[Publisher] Publishing ${blogsToPublish.length} scheduled page(s)...`);
 
-        if (isNaN(scheduledTime.getTime())) {
-          console.warn(`[Publisher] Invalid scheduled time/date for blog "${blog.title}": ${scheduledDateTimeStr}`);
-          continue;
-        }
-
-        if (scheduledTime <= now) {
-          blog.status = "published";
-          await blog.save();
-          console.log(`[Publisher] Successfully published page "${blog.title}" (scheduled for ${scheduledDateTimeStr})`);
-          
-          // Send notification email asynchronously
-          sendPublishEmail(blog);
-        }
-      } else {
-        // Fallback: If no date/time specified but marked as scheduled, publish immediately
-        blog.status = "published";
-        await blog.save();
-        console.log(`[Publisher] Published page "${blog.title}" immediately due to missing schedule parameters.`);
-        sendPublishEmail(blog);
-      }
+    for (const blog of blogsToPublish) {
+      blog.status = "published";
+      await blog.save();
+      console.log(`[Publisher] Published "${blog.title}"`);
+      sendPublishEmail(blog);
     }
   } catch (error) {
-    console.error("[Publisher] Error in checkAndPublishScheduled:", error);
+    console.error("[Publisher] Error:", error);
   }
 }

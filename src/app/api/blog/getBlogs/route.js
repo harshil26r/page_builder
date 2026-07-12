@@ -1,19 +1,17 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
 import { checkAndPublishScheduled } from "@/middleware/publisher";
-import { NextResponse } from "next/server";
+import { errorResponse, successResponse } from "@/lib/apiResponse";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     await dbConnect();
-    // Dynamically publish scheduled pages whose publish time has arrived
     await checkAndPublishScheduled();
-    const blog = await Blog.find();
-    return NextResponse.json({ blog });
+    const blog = await Blog.find().sort({ createdAt: -1 });
+    return successResponse({ blog });
   } catch (error) {
-    console.error("Error fetching blogs:", error);
-    return NextResponse.json({ success: false, error: error.message || error }, { status: 400 });
+    return errorResponse(error, "Failed to fetch pages");
   }
 }

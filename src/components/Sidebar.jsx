@@ -24,7 +24,7 @@ export default function Sidebar() {
   const isDash = pathname === "/";
 
   return (
-    <aside className="flex flex-col w-20 items-center bg-[#0a0f1d]/90 border-r border-white/10 text-slate-400 backdrop-blur-2xl py-6 px-3 h-screen sticky top-0 z-50 shrink-0 shadow-2xl">
+    <aside className="fixed left-0 top-0 flex flex-col w-20 items-center bg-[#0a0f1d]/95 border-r border-white/10 text-slate-400 backdrop-blur-2xl py-6 px-3 h-screen z-50 shrink-0 shadow-2xl">
       {/* Brand Icon / Logo */}
       <div className="flex flex-col items-center flex-1 space-y-8 w-full">
         <Link
@@ -49,9 +49,6 @@ export default function Sidebar() {
             title="Pages Directory"
           >
             <LuLayoutGrid className="text-xl transition-transform group-hover:scale-110" />
-            {isDash && (
-              <span className="absolute -left-1 w-1.5 h-6 bg-gradient-to-b from-cyan-400 to-indigo-500 rounded-r-full shadow-sm shadow-cyan-400" />
-            )}
           </Link>
 
           {/* Studio Link */}
@@ -65,9 +62,6 @@ export default function Sidebar() {
             title="Visual Studio Builder"
           >
             <LuSparkles className="text-xl transition-transform group-hover:scale-110" />
-            {isStudio && (
-              <span className="absolute -left-1 w-1.5 h-6 bg-gradient-to-b from-cyan-400 to-indigo-500 rounded-r-full shadow-sm shadow-cyan-400" />
-            )}
           </Link>
         </nav>
       </div>
@@ -75,6 +69,7 @@ export default function Sidebar() {
       {/* Bottom Actions */}
       <div className="flex flex-col space-y-3 w-full items-center pt-4 border-t border-white/10">
         <button
+          type="button"
           onClick={handleLogOut}
           className="group flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 hover:bg-rose-500/15 hover:text-rose-300 hover:border-rose-500/30 border border-transparent transition-all duration-200"
           title="Sign Out"
@@ -93,4 +88,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-

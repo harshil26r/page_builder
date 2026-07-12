@@ -1,7 +1,7 @@
 import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
 import { isValidObjectId } from "@/lib/validateObjectId";
-import { NextResponse } from "next/server";
+import { errorResponse, successResponse } from "@/lib/apiResponse";
 
 export async function GET(request, { params }) {
   try {
@@ -10,18 +10,17 @@ export async function GET(request, { params }) {
     const id = resolvedParams.id;
 
     if (!isValidObjectId(id)) {
-      return NextResponse.json({ success: false, error: "Invalid blog ID format" }, { status: 400 });
+      return errorResponse("Invalid blog ID format", "Invalid ID", 400);
     }
 
     const blog = await Blog.findById(id);
 
     if (!blog) {
-      return NextResponse.json({ success: false, error: "Blog not found" }, { status: 404 });
+      return errorResponse("Blog not found", "Blog not found", 404);
     }
 
-    return NextResponse.json({ success: true, blog });
+    return successResponse({ blog });
   } catch (error) {
-    console.error("Error fetching blog:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return errorResponse(error, "Failed to fetch blog");
   }
 }

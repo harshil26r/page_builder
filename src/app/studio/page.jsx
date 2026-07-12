@@ -54,8 +54,8 @@ function StudioContent() {
     url: "",
     showAuthor: false,
     status: "",
-    publishTime: "",
-    publishDate: "",
+    scheduleDate: "",
+    scheduleTime: "",
     blocks: [],
     metaTitle: "",
     metaDescription: "",
@@ -82,6 +82,16 @@ function StudioContent() {
       if (response && response.success && response.blog) {
         setCurrentBlogId(response.blog._id);
         setCurrentBlog(response.blog);
+        // Convert scheduledAt Date to separate date/time strings for inputs
+        const rawScheduled = response.blog.scheduledAt || "";
+        let sDate = "", sTime = "";
+        if (rawScheduled) {
+          const d = new Date(rawScheduled);
+          if (!isNaN(d.getTime())) {
+            sDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            sTime = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+          }
+        }
         setData({
           title: response.blog.title || "",
           subText: response.blog.subText || "",
@@ -89,8 +99,8 @@ function StudioContent() {
           url: response.blog.url || "",
           showAuthor: !!response.blog.showAuthor,
           status: response.blog.status || "",
-          publishTime: response.blog.publishTime || "",
-          publishDate: response.blog.publishDate || "",
+          scheduleDate: sDate,
+          scheduleTime: sTime,
           blocks: response.blog.blocks || [],
           metaTitle: response.blog.metaTitle || response.blog.title || "",
           metaDescription: response.blog.metaDescription || response.blog.subText || "",
@@ -207,6 +217,7 @@ function StudioContent() {
           attachments: data.attachments,
           url: data.url,
           showAuthor: data.showAuthor,
+          status: "draft",
           blocks: data.blocks,
           metaTitle: data.metaTitle,
           metaDescription: data.metaDescription,
@@ -223,7 +234,9 @@ function StudioContent() {
       });
       const response = await res.json();
       if (response.success) {
-        setCurrentBlogId(response.id);
+        const newId = response.id || response.blog?._id;
+        if (newId) setCurrentBlogId(newId);
+        setCurrentBlog((prev) => ({ ...prev, status: "draft" }));
         toast.success("Your Page saved as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
@@ -248,6 +261,7 @@ function StudioContent() {
           attachments: data.attachments,
           url: data.url,
           showAuthor: data.showAuthor,
+          status: "draft",
           blocks: data.blocks,
           metaTitle: data.metaTitle,
           metaDescription: data.metaDescription,
@@ -265,6 +279,7 @@ function StudioContent() {
       const response = await res.json();
       if (response.success) {
         setCurrentBlogId(targetId);
+        setCurrentBlog((prev) => ({ ...prev, status: "draft" }));
         toast.success("Your Page updated as Draft!", {
           position: "bottom-center",
           autoClose: 1000,
@@ -289,31 +304,49 @@ function StudioContent() {
     window.open(`${cleanUrl}?preview=true`, "_blank");
   };
 
-  const addPublishTime = async () => {
-    const res = await fetch(`/api/blog/addBlogPublishTime`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: currentBlogId || id,
-        status: "scheduled",
-        publishTime: data.publishTime,
-        publishDate: data.publishDate,
-      }),
-    });
-    const response = await res.json();
-    if (response.success) {
-      toast.success(response.message, {
-        position: "bottom-center",
-        autoClose: 1000,
+  const openPublishModal = () => {
+    if (!data.scheduleDate && !data.scheduleTime) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 5 - (now.getMinutes() % 5), 0, 0);
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      setData((prev) => ({ ...prev, scheduleDate: dateStr, scheduleTime: timeStr }));
+    }
+    setOpen(true);
+  };
+
+  const handlePublishAction = async (action) => {
+    const targetId = currentBlogId || id;
+    if (!targetId) {
+      toast.error("Please save the page first before publishing.", { position: "bottom-center" });
+      return;
+    }
+
+    const body = { id: targetId, action };
+    if (action === "schedule") {
+      if (!data.scheduleDate || !data.scheduleTime) {
+        toast.error("Please select both date and time to schedule.", { position: "bottom-center" });
+        return;
+      }
+      body.scheduledAt = new Date(`${data.scheduleDate}T${data.scheduleTime}`).toISOString();
+    }
+
+    try {
+      const res = await fetch("/api/blog/addBlogPublishTime", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
-      router.push("/");
-    } else {
-      toast.error(response.message || "Failed to publish", {
-        position: "bottom-center",
-        autoClose: 1000,
-      });
+      const response = await res.json();
+      if (response.success) {
+        toast.success(response.message, { position: "bottom-center", autoClose: 1500 });
+        setOpen(false);
+        router.push("/");
+      } else {
+        toast.error(response.error || "Failed to update publish status", { position: "bottom-center" });
+      }
+    } catch (err) {
+      toast.error("Network error. Please try again.", { position: "bottom-center" });
     }
   };
 
@@ -369,7 +402,7 @@ function StudioContent() {
       <div className="flex bg-[#070a12] bg-grid-pattern text-slate-100 min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative overflow-x-hidden">
         <Sidebar />
 
-        <div className="flex flex-col w-full min-h-screen pb-24 md:pb-8 relative">
+        <div className="flex flex-col w-full pl-20 min-h-screen pb-24 md:pb-8 relative">
           {/* Subtle Ambient Glow Blobs */}
           <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute top-1/2 left-1/3 w-[30rem] h-[30rem] bg-purple-500/10 rounded-full blur-[140px] pointer-events-none" />
@@ -474,7 +507,7 @@ function StudioContent() {
               </button>
 
               <button
-                onClick={() => setOpen(true)}
+                onClick={openPublishModal}
                 className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:brightness-110 text-xs font-extrabold text-white shadow-xl shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
               >
                 🚀 Publish
@@ -798,50 +831,101 @@ function StudioContent() {
                     </button>
                   </div>
 
-                  <div className="p-6 space-y-4 text-xs">
-                    <div>
-                      <label htmlFor="publishTime" className="block font-semibold text-slate-300 mb-1">
-                        Publish Date
-                      </label>
-                      <input
-                        id="publishTime"
-                        name="publishTime"
-                        type="date"
-                        value={data.publishTime}
-                        onChange={onChange}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
+                  {(() => {
+                    const hasFutureSchedule = data.scheduleDate && data.scheduleTime &&
+                      new Date(`${data.scheduleDate}T${data.scheduleTime}`) > new Date();
+                    return (
+                      <>
+                        <div className="p-6 space-y-5 text-xs">
+                          {/* Current Status + Revert to Draft */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400 font-semibold">Status:</span>
+                              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                currentBlog.status === "published"
+                                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                                  : currentBlog.status === "scheduled"
+                                  ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"
+                                  : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  currentBlog.status === "published" ? "bg-emerald-400 animate-pulse"
+                                    : currentBlog.status === "scheduled" ? "bg-indigo-400"
+                                    : "bg-amber-400"
+                                }`} />
+                                {currentBlog.status || "draft"}
+                              </span>
+                            </div>
+                            {(currentBlog.status === "published" || currentBlog.status === "scheduled") && (
+                              <button
+                                type="button"
+                                onClick={() => handlePublishAction("unpublish")}
+                                className="text-[11px] text-slate-500 hover:text-rose-400 transition-colors"
+                              >
+                                ↩ Revert to Draft
+                              </button>
+                            )}
+                          </div>
 
-                    <div>
-                      <label htmlFor="publishDate" className="block font-semibold text-slate-300 mb-1">
-                        Publish Time
-                      </label>
-                      <input
-                        id="publishDate"
-                        name="publishDate"
-                        type="time"
-                        value={data.publishDate}
-                        onChange={onChange}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
+                          {/* Date and Time Inputs */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label htmlFor="scheduleDate" className="block font-semibold text-slate-300 mb-1.5">
+                                Date
+                              </label>
+                              <input
+                                id="scheduleDate"
+                                name="scheduleDate"
+                                type="date"
+                                value={data.scheduleDate || ""}
+                                onChange={onChange}
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white text-sm focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="scheduleTime" className="block font-semibold text-slate-300 mb-1.5">
+                                Time
+                              </label>
+                              <input
+                                id="scheduleTime"
+                                name="scheduleTime"
+                                type="time"
+                                value={data.scheduleTime || ""}
+                                onChange={onChange}
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 px-3 text-white text-sm focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
+                              />
+                            </div>
+                          </div>
+                          {hasFutureSchedule && (
+                            <p className="text-indigo-400 text-[11px] font-medium">
+                              ⏰ Will be scheduled for {new Date(`${data.scheduleDate}T${data.scheduleTime}`).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
 
-                  <div className="bg-slate-950 px-6 py-4 flex justify-end gap-3 border-t border-slate-800">
-                    <button
-                      onClick={() => setOpen(false)}
-                      className="px-4 py-2 rounded-xl border border-slate-800 text-xs font-semibold text-slate-400 hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={addPublishTime}
-                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-lg"
-                    >
-                      Schedule Publish
-                    </button>
-                  </div>
+                        <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setOpen(false)}
+                            className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-400 hover:text-white hover:border-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handlePublishAction(hasFutureSchedule ? "schedule" : "publish_now")}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold text-white shadow-lg transition-all active:scale-[0.97] ${
+                              hasFutureSchedule
+                                ? "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:brightness-110 shadow-indigo-600/25"
+                                : "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:brightness-110 shadow-emerald-600/25"
+                            }`}
+                          >
+                            {hasFutureSchedule ? "⏰ Schedule" : "🚀 Publish Now"}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </Dialog.Panel>
               </Transition.Child>
             </div>
