@@ -317,7 +317,7 @@ export default function Home() {
                           </td>
 
                           <td className="px-6 py-4 text-slate-400 font-mono text-[11px]">
-                            {item.createdAt || "Recent"}
+                            {item.createdAt ? (item.createdAt instanceof Date ? item.createdAt.toLocaleString() : String(item.createdAt)) : "Recent"}
                           </td>
 
                           <td className="px-6 py-4">

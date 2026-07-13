@@ -2,10 +2,9 @@ import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import MarkdownRender from "@/components/MarkdownRender";
 import BlockRenderer from "@/components/BlockRenderer";
+import AuthorFooter from "@/components/AuthorFooter";
 import { IoIosArrowBack } from "react-icons/io";
-import { FaRegUser, FaRegEnvelope, FaRegClock } from "react-icons/fa";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +12,19 @@ export async function generateMetadata({ params }) {
   try {
     await dbConnect();
     const resolvedParams = await params;
-    const path = "/" + resolvedParams.slug.join("/");
-    const blog = await Blog.findOne({
-      $or: [{ url: path }, { url: resolvedParams.slug.join("/") }],
-    });
-    if (!blog) return {};
+    const slugList = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug : [];
+    const rawSlug = slugList.join("/");
+    const path = "/" + rawSlug;
 
-    const metaTitle = blog.metaTitle || blog.title;
-    const metaDescription = blog.metaDescription || blog.subText || "Created with Aura Studio";
-    const ogImages = blog.ogImage ? [{ url: blog.ogImage }] : [];
+    const blogDoc = await Blog.findOne({
+      $or: [{ url: path }, { url: rawSlug }],
+    }).lean();
+
+    if (!blogDoc) return {};
+
+    const metaTitle = blogDoc.metaTitle || blogDoc.title;
+    const metaDescription = blogDoc.metaDescription || blogDoc.subText || "Created with Aura Studio";
+    const ogImages = blogDoc.ogImage ? [{ url: blogDoc.ogImage }] : [];
 
     return {
       title: `${metaTitle} | Aura Studio`,
@@ -32,10 +35,10 @@ export async function generateMetadata({ params }) {
         images: ogImages,
       },
       twitter: {
-        card: blog.twitterCard || "summary_large_image",
+        card: blogDoc.twitterCard || "summary_large_image",
         title: metaTitle,
         description: metaDescription,
-        images: blog.ogImage ? [blog.ogImage] : [],
+        images: blogDoc.ogImage ? [blogDoc.ogImage] : [],
       },
     };
   } catch (error) {
@@ -50,14 +53,19 @@ export default async function CustomPage({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const path = "/" + resolvedParams.slug.join("/");
-  const blog = await Blog.findOne({
-    $or: [{ url: path }, { url: resolvedParams.slug.join("/") }],
-  });
+  const slugList = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug : [];
+  const rawSlug = slugList.join("/");
+  const path = "/" + rawSlug;
 
-  if (!blog) {
+  const rawBlog = await Blog.findOne({
+    $or: [{ url: path }, { url: rawSlug }],
+  }).lean();
+
+  if (!rawBlog) {
     notFound();
   }
+
+  const blog = JSON.parse(JSON.stringify(rawBlog));
 
   // Allow preview of draft/scheduled pages
   const isPreview = resolvedSearchParams?.preview === "true";
@@ -133,56 +141,11 @@ export default async function CustomPage({ params, searchParams }) {
               }}
             />
           </div>
-
-          {/* Author / Publication Metadata Card */}
-          {blog.showAuthor && (
-            <div className="mt-16 glass-panel-elevated rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center gap-6 justify-between border border-white/10">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/20 font-mono">
-                  {blog.createdBy ? blog.createdBy.charAt(0).toUpperCase() : "?"}
-                </div>
-                <div className="space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300 font-mono">
-                    Author Profile
-                  </span>
-                  <h4 className="font-bold text-lg text-white flex items-center gap-2">
-                    <FaRegUser className="text-sm text-cyan-400" /> {blog.createdBy}
-                  </h4>
-                  {blog.authorEmail && (
-                    <p className="text-sm text-slate-400 flex items-center gap-2">
-                      <FaRegEnvelope className="text-sm text-slate-500" /> {blog.authorEmail}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col md:items-end text-xs text-slate-400 gap-1 border-t border-white/10 pt-4 md:pt-0 md:border-0 w-full md:w-auto">
-                <span className="flex items-center gap-1.5 font-mono">
-                  <FaRegClock className="text-xs text-cyan-400" /> Published: {blog.createdAt || "N/A"}
-                </span>
-                <span>
-                  Last modified by: <strong className="text-slate-200">{blog.modifiedBy}</strong>
-                </span>
-              </div>
-            </div>
-          )}
         </article>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 bg-[#070a12]/50 py-8 text-center text-xs text-slate-500">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Aura Studio. All rights reserved.</p>
-          <p className="flex items-center gap-1">
-            <span>Powered by</span>
-            <Link
-              href="/"
-              className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline transition"
-            >
-              Aura Studio Page Builder
-            </Link>
-          </p>
-        </div>
-      </footer>
+      {/* Interactive Footer with Author Badge and Floating Details Modal */}
+      <AuthorFooter blog={blog} />
     </div>
   );
 }
