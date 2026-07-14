@@ -9,8 +9,8 @@ const Login = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
-    email: "",
-    password: "",
+    email: "pipaliyaharshil26@gmail.com",
+    password: "12345678",
   });
   const [error, setError] = useState("");
 

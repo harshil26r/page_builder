@@ -32,7 +32,7 @@ const BlogSchema = new Schema(
     textColor: { type: String, required: false, default: "#f8fafc" },
     fontStyle: { type: String, required: false, default: "sans" },
     fontSize: { type: String, required: false, default: "base" },
-    spacing: { type: String, required: false, default: "normal" },
+    spacing: { type: String, required: false, default: "normal font-sans" },
     customCss: { type: String, required: false, default: "" },
   },
   { timestamps: true }

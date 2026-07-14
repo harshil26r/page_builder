@@ -1,8 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LuSearch, LuPlus, LuMoreHorizontal, LuExternalLink, LuPencil, LuTrash2, LuFileText, LuCheck, LuClock, LuLayers } from "react-icons/lu";
+import { LuSearch, LuPlus, LuMoreHorizontal, LuExternalLink, LuPencil, LuTrash2, LuFileText, LuCheck, LuClock, LuLayers, LuCopy } from "react-icons/lu";
+import { HiSparkles } from "react-icons/hi";
+import { toast } from "react-toastify";
 import Sidebar from "@/components/Sidebar";
+import TemplateLibraryModal from "@/components/TemplateLibraryModal";
 
 export default function Home() {
   const router = useRouter();
@@ -10,6 +13,26 @@ export default function Home() {
   const [blogs, setBlogs] = useState([]);
   const [filterBlogs, setFilterBlogs] = useState([]);
   const [selectBlogId, setSelectBlogId] = useState("");
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+
+  const handleDuplicate = async (blogId) => {
+    try {
+      const res = await fetch("/api/blog/duplicateBlog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: blogId }),
+      });
+      const response = await res.json();
+      if (response.success) {
+        toast.success(response.message || "Page duplicated as draft!", { position: "bottom-center" });
+        allBlogs();
+      } else {
+        toast.error(response.error || "Failed to duplicate page", { position: "bottom-center" });
+      }
+    } catch (err) {
+      toast.error("Network error duplicating page", { position: "bottom-center" });
+    }
+  };
 
   const [data, setData] = useState({
     searchInput: "",
@@ -148,12 +171,20 @@ export default function Home() {
             </p>
           </div>
 
-          <button
-            onClick={() => router.push("/studio")}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <LuPlus className="text-base" /> Create New Page
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsTemplateModalOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 border border-white/15 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:text-white hover:border-cyan-400/50 hover:bg-slate-800 transition-all shadow-md active:scale-95"
+            >
+              <HiSparkles className="text-base text-cyan-400" /> Starter Templates
+            </button>
+            <button
+              onClick={() => router.push("/studio")}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <LuPlus className="text-base" /> Create New Page
+            </button>
+          </div>
         </header>
 
         <div className="p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -346,6 +377,13 @@ export default function Home() {
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
+                                onClick={() => handleDuplicate(item._id)}
+                                className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all shadow-sm"
+                                title="Duplicate Page as Draft"
+                              >
+                                <LuCopy className="text-sm" />
+                              </button>
+                              <button
                                 onClick={() => router.push(`/studio?id=${item._id}`)}
                                 className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-600/15 transition-all shadow-sm"
                                 title="Edit Page in Studio"
@@ -371,6 +409,12 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Starter Template Library Modal */}
+      <TemplateLibraryModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+      />
     </div>
   );
 }

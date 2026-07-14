@@ -407,10 +407,15 @@ export default function BlockBuilder({ blocks = [], onChange }) {
 
   const updateBlockData = (index, field, value) => {
     const updated = [...blocks];
+    const currentData = updated[index]?.data || updated[index]?.content || {};
     updated[index] = {
       ...updated[index],
       data: {
-        ...updated[index].data,
+        ...currentData,
+        [field]: value,
+      },
+      content: {
+        ...currentData,
         [field]: value,
       },
     };
@@ -509,6 +514,9 @@ export default function BlockBuilder({ blocks = [], onChange }) {
           </div>
 
           {safeBlocks.map((block, idx) => {
+            const bData = block.data || block.content || {};
+            block.data = bData;
+            block.content = bData;
             const blockDef = BLOCK_TYPES.find((b) => b.type === block.type) || BLOCK_TYPES[0];
             const Icon = blockDef.icon;
             const isOpen = activeBlockIndex === idx;
@@ -564,7 +572,10 @@ export default function BlockBuilder({ blocks = [], onChange }) {
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                          {block.data.title || block.data.headline || block.data.content || "Click to edit block options"}
+                          {(() => {
+                            const bData = block?.data || block?.content || {};
+                            return bData.title || bData.headline || bData.subTitle || (typeof bData.content === "string" ? bData.content : null) || "Click to edit block options";
+                          })()}
                         </p>
                       </div>
                     </button>
