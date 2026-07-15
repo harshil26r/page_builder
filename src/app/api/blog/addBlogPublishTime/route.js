@@ -2,16 +2,19 @@ import { dbConnect } from "@/middleware/mongoConnect";
 import Blog from "@/models/blog";
 import { isValidObjectId } from "@/lib/validateObjectId";
 import { errorResponse, successResponse } from "@/lib/apiResponse";
+import { getAuthUserWithRole, canPublish } from "@/lib/permissions";
 
 export async function PATCH(request) {
   try {
     await dbConnect();
+    const { user, role } = await getAuthUserWithRole();
+    if (!user) return errorResponse("Unauthorized", "Unauthorized", 401);
+    if (!canPublish(role)) return errorResponse("Your role (" + role + ") cannot publish pages.", "Forbidden", 403);
+
     const body = await request.json();
     const { id, action, scheduledAt } = body;
 
-    if (!isValidObjectId(id)) {
-      return errorResponse("Invalid blog ID format", "Invalid ID", 400);
-    }
+    if (!isValidObjectId(id)) return errorResponse("Invalid blog ID format", "Invalid ID", 400);
 
     let updateFields = {};
 
@@ -19,27 +22,18 @@ export async function PATCH(request) {
       case "publish_now":
         updateFields = { status: "published", scheduledAt: null };
         break;
-
       case "schedule": {
-        if (!scheduledAt) {
-          return errorResponse("scheduledAt is required for scheduling", "Scheduled time required", 400);
-        }
+        if (!scheduledAt) return errorResponse("scheduledAt is required", "Scheduled time required", 400);
         const scheduleDate = new Date(scheduledAt);
-        if (isNaN(scheduleDate.getTime())) {
-          return errorResponse("Invalid scheduledAt date format", "Invalid date", 400);
-        }
-        if (scheduleDate <= new Date()) {
-          updateFields = { status: "published", scheduledAt: scheduleDate };
-        } else {
-          updateFields = { status: "scheduled", scheduledAt: scheduleDate };
-        }
+        if (isNaN(scheduleDate.getTime())) return errorResponse("Invalid scheduledAt date", "Invalid date", 400);
+        updateFields = scheduleDate <= new Date()
+          ? { status: "published", scheduledAt: scheduleDate }
+          : { status: "scheduled", scheduledAt: scheduleDate };
         break;
       }
-
       case "unpublish":
         updateFields = { status: "draft", scheduledAt: null };
         break;
-
       default:
         return errorResponse(`Unknown action: ${action}`, "Invalid action", 400);
     }
@@ -49,17 +43,13 @@ export async function PATCH(request) {
       { $set: updateFields },
       { new: true }
     );
+    if (!updatedBlog) return errorResponse("Blog not found", "Blog not found", 404);
 
-    if (!updatedBlog) {
-      return errorResponse("Blog not found", "Blog not found", 404);
-    }
-
-    const message =
-      updateFields.status === "published"
-        ? "Page published live successfully"
-        : updateFields.status === "scheduled"
-        ? `Page scheduled for ${new Date(scheduledAt).toLocaleString()}`
-        : "Page reverted to draft";
+    const message = updateFields.status === "published"
+      ? "Page published live successfully"
+      : updateFields.status === "scheduled"
+      ? `Page scheduled for ${new Date(scheduledAt).toLocaleString()}`
+      : "Page reverted to draft";
 
     return successResponse({ blog: updatedBlog }, message);
   } catch (error) {

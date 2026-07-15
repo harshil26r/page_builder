@@ -222,7 +222,7 @@ const BLOCK_TYPES = [
   },
 ];
 
-export default function BlockBuilder({ blocks = [], onChange }) {
+export default function BlockBuilder({ blocks = [], onChange, readOnly = false }) {
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -425,68 +425,70 @@ export default function BlockBuilder({ blocks = [], onChange }) {
   return (
     <div className="space-y-6 font-sans">
       {/* Block Selector Toolbar */}
-      <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 sm:p-5 backdrop-blur-xl shadow-2xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
-              <HiPlus className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                Add Section Block
-              </h4>
-              <p className="text-[11px] text-slate-400">Tap or drag any block card below to insert it into your layout</p>
-            </div>
-          </div>
-          <span className="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
-            {blocks.length} Blocks
-          </span>
-        </div>
-
-        {/* Scrollable Block Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {BLOCK_TYPES.map((b) => {
-            const Icon = b.icon;
-            return (
-              <div
-                key={b.type}
-                draggable
-                onDragStart={(e) => {
-                  dragCounterRef.current = {};
-                  setActiveBlockIndex(null); // ponytail: collapse blocks when dragging
-                  setDraggedAddType(b.type);
-                  const payload = JSON.stringify({ action: "add_block", type: b.type });
-                  e.dataTransfer.setData("application/json", payload);
-                  e.dataTransfer.setData("text/plain", payload);
-                  e.dataTransfer.effectAllowed = "copy";
-                }}
-                onDragEnd={resetDragState}
-                onClick={() => addBlock(b.type)}
-                className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none"
-              >
-                <div
-                  className={`p-2.5 rounded-xl bg-gradient-to-br ${b.gradient} text-white shadow-md group-hover:scale-110 transition-transform shrink-0`}
-                >
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5 min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
-                      {b.label}
-                    </span>
-                    <span className="text-[9px] font-semibold text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
-                      {b.badge}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
-                    {b.description}
-                  </p>
-                </div>
+      {!readOnly && (
+        <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 sm:p-5 backdrop-blur-xl shadow-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                <HiPlus className="w-4 h-4" />
               </div>
-            );
-          })}
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Add Section Block
+                </h4>
+                <p className="text-[11px] text-slate-400">Tap or drag any block card below to insert it into your layout</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+              {blocks.length} Blocks
+            </span>
+          </div>
+
+          {/* Scrollable Block Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {BLOCK_TYPES.map((b) => {
+              const Icon = b.icon;
+              return (
+                <div
+                  key={b.type}
+                  draggable
+                  onDragStart={(e) => {
+                    dragCounterRef.current = {};
+                    setActiveBlockIndex(null); // ponytail: collapse blocks when dragging
+                    setDraggedAddType(b.type);
+                    const payload = JSON.stringify({ action: "add_block", type: b.type });
+                    e.dataTransfer.setData("application/json", payload);
+                    e.dataTransfer.setData("text/plain", payload);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  onDragEnd={resetDragState}
+                  onClick={() => addBlock(b.type)}
+                  className="group flex items-start gap-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-900 hover:border-indigo-500/40 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none"
+                >
+                  <div
+                    className={`p-2.5 rounded-xl bg-gradient-to-br ${b.gradient} text-white shadow-md group-hover:scale-110 transition-transform shrink-0`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                        {b.label}
+                      </span>
+                      <span className="text-[9px] font-semibold text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                        {b.badge}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
+                      {b.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Active Added Blocks List with HTML5 Drag & Drop */}
       {blocks.length === 0 ? (

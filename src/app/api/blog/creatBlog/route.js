@@ -1,58 +1,32 @@
 import { dbConnect } from "@/middleware/mongoConnect";
-import User from "@/models/user";
 import Blog from "@/models/blog";
-import Session from "@/models/session";
 import moment from "moment";
-import { unsignCookie } from "@/middleware/cookieSigner";
-import { isValidObjectId } from "@/lib/validateObjectId";
 import { errorResponse, successResponse } from "@/lib/apiResponse";
-import { cookies } from "next/headers";
+import { getAuthUserWithRole, canEdit } from "@/lib/permissions";
 
 export async function POST(request) {
   try {
     await dbConnect();
+    const { user, role } = await getAuthUserWithRole();
+    if (!user) return errorResponse("Unauthorized", "Unauthorized", 401);
+    if (!canEdit(role)) return errorResponse("Your role (" + role + ") cannot create pages.", "Forbidden", 403);
+
     const bodyData = await request.json();
     const { title, subText, attachments, url, showAuthor, blocks, metaTitle, metaDescription, ogImage } = bodyData;
 
-    if (!title || !title.trim()) {
-      return errorResponse("Title is required", "Title is required", 400);
-    }
-    if (!url || !url.trim()) {
-      return errorResponse("URL slug is required", "URL slug is required", 400);
-    }
+    if (!title || !title.trim()) return errorResponse("Title is required", "Title is required", 400);
+    if (!url || !url.trim()) return errorResponse("URL slug is required", "URL slug is required", 400);
 
     const formattedDate = moment().format("D/M/YYYY,h:mm A");
 
-    const cookieStore = await cookies();
-    const rawSid = cookieStore.get("sid")?.value;
-    const sid = rawSid ? unsignCookie(rawSid) : null;
-    
-    if (!sid || !isValidObjectId(sid)) {
-      return errorResponse("Unauthorized: Please login first", "Unauthorized", 401);
-    }
-
-    const sessionObj = await Session.findById(sid);
-    if (!sessionObj) {
-      return errorResponse("Unauthorized: Session expired or invalid", "Unauthorized", 401);
-    }
-
-    const user = await User.findById(sessionObj.userId);
-    if (!user) {
-      return errorResponse("User not found", "User not found", 400);
-    }
-
-    const existingBlog = await Blog.findOne({ title });
-    if (existingBlog) {
-      return errorResponse(`A page with title "${title}" already exists.`, "Duplicate title", 400);
-    }
+    // Scope duplicate checks to this user's pages only
+    const existingTitle = await Blog.findOne({ title: title.trim(), authorEmail: user.email });
+    if (existingTitle) return errorResponse(`A page with title "${title}" already exists in your pages.`, "Duplicate title", 400);
 
     const rawUrl = url.trim();
     const normalizedUrl = rawUrl.startsWith("/") ? rawUrl : "/" + rawUrl;
-
-    const existingUrl = await Blog.findOne({ url: normalizedUrl });
-    if (existingUrl) {
-      return errorResponse(`A page with URL path "${normalizedUrl}" already exists.`, "Duplicate URL", 400);
-    }
+    const existingUrl = await Blog.findOne({ url: normalizedUrl, authorEmail: user.email });
+    if (existingUrl) return errorResponse(`A page with URL "${normalizedUrl}" already exists in your pages.`, "Duplicate URL", 400);
 
     const newBlog = new Blog({
       title: title.trim(),
@@ -80,7 +54,21 @@ export async function POST(request) {
       customCss: bodyData.customCss || "",
     });
 
-    await newBlog.save();
+    try {
+      await newBlog.save();
+    } catch (saveErr) {
+      // ponytail: auto-drop stale unique index from old schema if it blocks
+      if (saveErr?.code === 11000) {
+        try {
+          await Blog.collection.dropIndex("title_1");
+          await newBlog.save();
+        } catch (retryErr) {
+          return errorResponse(retryErr, "Failed to create page");
+        }
+      } else {
+        throw saveErr;
+      }
+    }
     return successResponse({ id: newBlog._id, blog: newBlog }, "Page created successfully", 201);
   } catch (error) {
     return errorResponse(error, "Failed to create page");

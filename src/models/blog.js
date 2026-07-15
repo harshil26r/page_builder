@@ -2,7 +2,7 @@ import { Schema, model, models } from "mongoose";
 
 const BlogSchema = new Schema(
   {
-    title: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
     subText: { type: String, required: false, default: "" },
     attachments: { type: String, required: false },
     url: { type: String, required: true },

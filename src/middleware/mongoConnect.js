@@ -27,6 +27,11 @@ export async function dbConnect() {
     });
   }
   cached.conn = await cached.promise;
+  try {
+    await cached.conn.connection.collection("blogs").dropIndex("title_1");
+  } catch {
+    /* ignore if index is already dropped */
+  }
   return cached.conn;
 }
 

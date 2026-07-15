@@ -125,6 +125,12 @@ function StudioContent() {
     }
   };
 
+  const [userRole, setUserRole] = useState("Owner");
+
+  const canEdit = ["Owner", "Admin", "Editor", "Publisher"].includes(userRole);
+  const canPublish = ["Owner", "Admin", "Publisher"].includes(userRole);
+  const canDelete = ["Owner", "Admin"].includes(userRole);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -132,6 +138,17 @@ function StudioContent() {
         const response = await res.json();
         if (response.success) {
           setUser(response.user.username);
+
+          try {
+            const wsRes = await fetch("/api/workspace");
+            const wsData = await wsRes.json();
+            if (wsData.success) {
+              setUserRole(wsData.userRole || "Owner");
+            }
+          } catch {
+            /* fallback Owner */
+          }
+
           if (id) {
             getBlogData(id);
           } else {
@@ -487,7 +504,7 @@ function StudioContent() {
                     >
                       🔗 Live URL Preview
                     </button>
-                    {(id || currentBlogId) && (
+                    {(canDelete && (id || currentBlogId)) && (
                       <button
                         onClick={handleDeleteBlog}
                         className="block w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors border-t border-white/10 mt-1"
@@ -499,21 +516,36 @@ function StudioContent() {
                 )}
               </div>
 
-              <button
-                onClick={validateForm}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-slate-900 hover:bg-indigo-900/30 border border-indigo-500/40 text-xs font-extrabold text-indigo-300 hover:text-indigo-200 shadow-md active:scale-[0.96] transition-all flex items-center gap-1.5"
-              >
-                <HiCheck className="text-sm" /> Save Draft
-              </button>
+              {canEdit ? (
+                <button
+                  onClick={validateForm}
+                  className="h-10 px-4 sm:px-5 rounded-2xl bg-slate-900 hover:bg-indigo-900/30 border border-indigo-500/40 text-xs font-extrabold text-indigo-300 hover:text-indigo-200 shadow-md active:scale-[0.96] transition-all flex items-center gap-1.5"
+                >
+                  <HiCheck className="text-sm" /> Save Draft
+                </button>
+              ) : (
+                <span className="h-10 px-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold text-amber-400/90 flex items-center gap-1.5" title="Viewer permissions: Read-only access">
+                  👁️ Read-Only ({userRole})
+                </span>
+              )}
 
-              <button
-                onClick={openPublishModal}
-                className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:brightness-110 text-xs font-extrabold text-white shadow-xl shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
-              >
-                🚀 Publish
-              </button>
+              {canPublish && (
+                <button
+                  onClick={openPublishModal}
+                  className="h-10 px-4 sm:px-5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:brightness-110 text-xs font-extrabold text-white shadow-xl shadow-indigo-600/25 active:scale-[0.96] transition-all flex items-center gap-1.5"
+                >
+                  🚀 Publish
+                </button>
+              )}
             </div>
           </header>
+
+          {!canEdit && (
+            <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-2 mx-4 sm:mx-6 md:mx-8 mt-4 shadow-md">
+              <span className="text-base">👁️</span>
+              <span><strong>Read-Only Mode:</strong> You are viewing this page with <strong>{userRole}</strong> permissions in this workspace. Page editing, block modifications, and publishing are restricted.</span>
+            </div>
+          )}
 
           {/* Main Builder Workspace & Configuration Grid */}
           <div className="flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 items-start relative w-full">
@@ -602,6 +634,7 @@ function StudioContent() {
                   <BlockBuilder
                     blocks={data.blocks || []}
                     onChange={(newBlocks) => setData({ ...data, blocks: newBlocks })}
+                    readOnly={!canEdit}
                   />
                 ) : contentTab === "seo" ? (
                   <SeoPreview

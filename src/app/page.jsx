@@ -14,6 +14,10 @@ export default function Home() {
   const [filterBlogs, setFilterBlogs] = useState([]);
   const [selectBlogId, setSelectBlogId] = useState("");
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState("Owner");
+
+  const canEditPages = ["Owner", "Admin", "Editor", "Publisher"].includes(userRole);
+  const canDeletePages = ["Owner", "Admin"].includes(userRole);
 
   const handleDuplicate = async (blogId) => {
     try {
@@ -73,6 +77,14 @@ export default function Home() {
         const response = await res.json();
         if (response.success) {
           allBlogs();
+          // Fetch workspace role
+          try {
+            const wsRes = await fetch("/api/workspace");
+            const wsData = await wsRes.json();
+            if (wsData.success) {
+              setUserRole(wsData.userRole || "Owner");
+            }
+          } catch { /* fallback Owner */ }
         } else {
           router.push("/auth/login");
         }
@@ -83,6 +95,7 @@ export default function Home() {
     };
     checkAuth();
   }, [router]);
+
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -172,18 +185,26 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsTemplateModalOpen(true)}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 border border-white/15 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:text-white hover:border-cyan-400/50 hover:bg-slate-800 transition-all shadow-md active:scale-95"
-            >
-              <HiSparkles className="text-base text-cyan-400" /> Starter Templates
-            </button>
-            <button
-              onClick={() => router.push("/studio")}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-            >
-              <LuPlus className="text-base" /> Create New Page
-            </button>
+            {canEditPages ? (
+              <>
+                <button
+                  onClick={() => setIsTemplateModalOpen(true)}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 border border-white/15 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:text-white hover:border-cyan-400/50 hover:bg-slate-800 transition-all shadow-md active:scale-95"
+                >
+                  <HiSparkles className="text-base text-cyan-400" /> Starter Templates
+                </button>
+                <button
+                  onClick={() => router.push("/studio")}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-xl shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <LuPlus className="text-base" /> Create New Page
+                </button>
+              </>
+            ) : (
+              <span className="px-4 py-2.5 rounded-2xl bg-slate-900 border border-amber-500/30 text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                👁️ Read-Only ({userRole})
+              </span>
+            )}
           </div>
         </header>
 
@@ -376,27 +397,31 @@ export default function Home() {
 
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleDuplicate(item._id)}
-                                className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all shadow-sm"
-                                title="Duplicate Page as Draft"
-                              >
-                                <LuCopy className="text-sm" />
-                              </button>
+                              {canEditPages && (
+                                <button
+                                  onClick={() => handleDuplicate(item._id)}
+                                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all shadow-sm"
+                                  title="Duplicate Page as Draft"
+                                >
+                                  <LuCopy className="text-sm" />
+                                </button>
+                              )}
                               <button
                                 onClick={() => router.push(`/studio?id=${item._id}`)}
                                 className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-600/15 transition-all shadow-sm"
-                                title="Edit Page in Studio"
+                                title={canEditPages ? "Edit Page in Studio" : "View Page in Studio"}
                               >
-                                <LuPencil className="text-sm" />
+                                {canEditPages ? <LuPencil className="text-sm" /> : <LuExternalLink className="text-sm" />}
                               </button>
-                              <button
-                                onClick={() => handleDelete(item._id)}
-                                className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all shadow-sm"
-                                title="Delete Page"
-                              >
-                                <LuTrash2 className="text-sm" />
-                              </button>
+                              {canDeletePages && (
+                                <button
+                                  onClick={() => handleDelete(item._id)}
+                                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all shadow-sm"
+                                  title="Delete Page"
+                                >
+                                  <LuTrash2 className="text-sm" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
